@@ -1,0 +1,157 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'权限名称', 'name':'endpoint_name',},
+        {'label':'角色', 'name':'role_id', 'type':'dbselect', 'options':role_list},
+    ]
+%}
+
+{{ libs.build_search_form(form_config) }}
+{% endblock %}
+
+{% block data_body %}
+<input type="hidden" id="endpoint" value="{{ url_for('power.index') }}">
+<input type="hidden" id="hidden_role_id" value="{{ role_id }}">
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>权限id</th>
+            <th>角色</th>
+            <th>权限名称</th>
+            <th>允许访问的endpoint列表</th>
+            <th width="15%;">排序</th>
+            <th>编辑</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for power in power_list %}
+        <tr>
+            <td>{{ power.permission_id }}</td>
+            <td>{{ role_dict.get(power.role_id, '') }}</td>
+            <td>{{ power.endpoint_name }}</td>
+            <td>{{ power.endpoint_list }}</td>
+            <td class="sort_order" permission_id="{{ power.permission_id }}">{{ power.sort_order }}</td>
+            {% set role_name = role_dict.get(power.role_id, '其他成员') %}
+            <td><a href="javascript:;" onclick="javascript:power_edit({{ power.permission_id }}, {{ power.rp_id }}, '{{ role_name }}', '{{ power.endpoint_name }}', '{{ power.endpoint_list }}', {{ power.sort_order }},this);">编辑</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+<!-- 权限编辑弹出层 -->
+<div class="modal fade" id="power_modal" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="margin-top: 10%;width: 150%;">
+            <form class="form-horizontal" id="power_modal_form" autocomplete="off" enctype="multipart/form-data">
+                <input type="hidden" name="rp_id" id="rp_id" value="">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">关闭</span>
+                    </button>
+                    <h4 class="modal-title">权限编辑</h4>
+                </div>
+                <div class="modal-body">
+                    {{ libs.input('权限id', 'permission_id', '', required='required', disabled="yes") }}
+                    {{ libs.input('角色', 'role_id_modal', '', required='required', disabled="yes") }}
+                    {{ libs.input('权限名称', 'endpoint_name_modal', '', required='required', disabled="yes") }}
+                    {{ libs.input('允许访问的endpoint列表', 'endpoint_list', '', required='required') }}
+                    {{ libs.input('排序', 'sort_order', '',type='number', required='required min=0', help='从大小到排序') }}
+                </div>
+                <div class="modal-footer">
+                    <a type="button" class="btn btn-primary" id="submit">提交</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+function power_edit(permission_id, rp_id, role_name, endpoint_name, endpoint_list, sort_order,adom) {
+    $('#permission_id').val(permission_id);
+    $('#rp_id').val(rp_id);
+    $('#role_id_modal').val(role_name);
+    $('#endpoint_name_modal').val(endpoint_name);
+    $('#endpoint_list').val(endpoint_list);
+    $('#sort_order').val(sort_order);
+    $('#power_modal').modal({backdrop:false});
+}
+$(document).ready( function(){
+    $("#add_new").click(function(){
+        window.location.href = '/power/role_admin';
+    });
+    $('a#submit').click(function(){
+        var permission_id = $('#permission_id').val();
+        var rp_id = $('#rp_id').val();
+        var role_id = $('#role_id_modal').val();
+        var endpoint_name = $('#endpoint_name_modal').val();
+        var endpoint_list = $('#endpoint_list').val();
+        var sort_order = $('#sort_order').val();
+        $.get('/power/edit', {'permission_id':permission_id, 'rp_id':rp_id, 'endpoint_list':endpoint_list, 'sort_order':sort_order}, function (res){
+            if (res != 'ok') {
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            } else {
+                window.wxc.xcConfirm('修改成功！', window.wxc.xcConfirm.typeEnum.success);
+                var t1 = setTimeout(function(){
+                    window.location.href = '';
+                }, 1000);
+            }
+        });
+    });
+    $('td.sort_order').click(function(){
+        var $td = $(this);
+        var $tr = $(this).parent();
+        var permission_id = $(this).attr('permission_id');
+        var sort = $.trim($td.text());
+        var input = $("<input type='text' value='" + sort + "'/>");
+        $td.html(input);
+        input.click(function () { return false; });
+
+        //获取焦点
+        input.trigger("focus");
+
+        //文本框失去焦点后提交内容，重新变为文本
+        input.blur(function () {
+            var new_sort = $(this).val();
+
+            //判断文本有没有修改
+            if (new_sort != sort) {
+                $.get('/power/permission_sort/modify', {'permission_id':permission_id, 'sort':sort, 'new_sort':new_sort}, function (res){
+                    if (res == 'ok') {
+                        $td.html(new_sort);
+                    } else {
+                        window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                        $td.html(sort);
+                        return false;
+                    }
+                });
+            } else {
+                $td.html(sort);
+            }
+        });
+    });
+});
+</script>
+<script type="text/javascript">
+
+$("#role_id").change(function(){
+    var hidden_role_id = $('#hidden_role_id').val();
+    var role_id = $("#role_id").val();
+
+    if (hidden_role_id != role_id) {
+        var endpoint = $('#endpoint').val();
+        window.location.href = endpoint+'?role_id='+role_id;
+        return;
+    }
+});
+
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/user/troy_list') }}">马甲用户列表</a></li>
+{% endblock %}
+
+{% block box_body %}
+<form class="form-horizontal" method="POST" action="{{ url_for('user.troy_save') }}" enctype="multipart/form-data">
+    <input type="hidden" name="uid" id="uid" value="{{ f.uid }}">
+    {{ libs.input('昵称', 'nickname', f.nickname, required='required') }}
+    {{ libs.submit() }}
+</form>
+{% endblock %}

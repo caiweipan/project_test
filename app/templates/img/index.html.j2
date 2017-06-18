@@ -1,0 +1,141 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'分类名称', 'name':'ic_id', 'type':'dbselect', 'options':ic_list},
+        {'label':'标题', 'name':'img_title',},
+        {'label':'增加时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+{% endblock %}
+
+{% block data_body %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>图片ID</th>
+            <th>图片</th>
+            <th>图片url</th>
+            <th>分类名称</th>
+            <th>标题</th>
+            <th>添加时间</th>
+            <th>详情</th>
+            <th>移除</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for i in img_list %}
+        <tr>
+            <td>{{ i.img_id }}</td>
+            <td style="padding-bottom: 0px;padding-top: 0px;">
+                <div class="lightBoxGallery" style="text-align: left;">
+                    <a href="{{ i._img }}" title="{{ i.img_title }}" data-gallery="">
+                        <img src="{{ i._img }}" style="max-width: 50px;">
+                    </a>
+                </div>
+            </td>
+            <td>
+                <a href="javascript:;" onclick="javascript:copy_url({{ i.img_id }}, this);" id="img_url_{{ i.img_id }}" data-clipboard-action="copy" data-clipboard-target="#img_url_{{ i.img_id }}">
+                    {{ i._img }}
+                </a>
+            </td>
+            <td>{{ i.ic_name }}</td>
+            <td><a id="img_title_{{ i.img_id }}" img_id="{{ i.img_id }}" class="img_title" data-tooltip="{{ i.img_title }}">{{ i.img_title|striptags|truncate(18, Ture) }}</a></td>
+            <td>{{ i.add_time|format_timestamp }}</td>
+            <td><a href="{{ url_for('img.detail', img_id=i.img_id)}}">详情</a></td>
+            <td><a href="javascript:;" onclick="javascript:delete_img({{ i.img_id }}, this);">移除</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{{ libs.pagination_html(pagination) }}
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$("a.add_new").click(function(){
+    window.location.href = '/img/add';
+});
+// $(function () { $("[data-toggle='tooltip']").tooltip(); });
+function copy_url(img_id, adom) {
+    var clipboard = new Clipboard('a#img_url_'+img_id);
+    clipboard.on('success', function(e) {
+        window.wxc.xcConfirm('复制成功!', window.wxc.xcConfirm.typeEnum.success);
+        $('a.sgBtn.ok').click(function() {
+            $('div.xcConfirm').remove();
+        });
+    });
+    clipboard.on('error', function(e) {
+        window.wxc.xcConfirm('复制失败！请手动复制', window.wxc.xcConfirm.typeEnum.error).fadeOut(2000);
+    });
+}
+function delete_img(img_id, adom) {
+    window.wxc.xcConfirm('确定要移除该图片吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/img/delete', {'img_id':img_id}, function(res){
+            if (res != 'ok'){
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            window.wxc.xcConfirm('移除成功！', window.wxc.xcConfirm.typeEnum.success);
+            $(adom).parents('tr').remove();
+            $count = $("a[href='javascript:;'].btn.btn-white").html()
+            img_count = Number($count.slice(0, -1));
+            if (img_count == 1){
+                $('#pagination').html('暂无数据');
+            }else{
+                var img_count = img_count-1;
+                $("a[href='javascript:;'].btn.btn-white").html(img_count+'条');
+            }
+        });
+    });
+}
+$(document).ready( function(){
+    $('a.img_title').each(function(){
+        var img_id = $(this).attr('img_id');
+        $('#img_title_'+img_id).darkTooltip({
+            size:'large',
+            trigger:'click',
+            animation:'flipIn',
+            gravity:'west',
+            modal: false,
+        });
+    })
+    $('td.sort_order').click(function(){
+        var $td = $(this);
+        var img_id = $(this).attr('img_id');
+        var sort = $.trim($td.text());
+        var input = $("<input type='text' style='width: 50%;' value='" + sort + "'/>");
+        $td.html(input);
+        input.click(function () { return false; });
+
+        //获取焦点
+        input.trigger("focus");
+
+        //文本框失去焦点后提交内容，重新变为文本
+        input.blur(function () {
+            var new_sort = $(this).val();
+
+            //判断文本有没有修改
+            if (new_sort != sort) {
+                $.get('/img/sort_order/modify', {'img_id':img_id, 'sort':sort, 'new_sort':new_sort}, function (res){
+                    if (res == 'ok') {
+                        $td.html(new_sort);
+                    } else {
+                        window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                        $td.html(sort);
+                        return false;
+                    }
+                });
+            } else {
+                $td.html(sort);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

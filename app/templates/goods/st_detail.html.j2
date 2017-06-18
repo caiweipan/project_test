@@ -1,0 +1,140 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+
+<li><a href="{{ url_for('goods.goods_list')}}">商品列表</a></li>
+{% endblock %}
+
+{% block body %}
+<link rel="stylesheet" href="//apps.bdimg.com/libs/jqueryui/1.10.4/css/jquery-ui.min.css">
+<div class="row">
+    <div class="col-lg-6 col-md-6 col-xs-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" enctype="multipart/form-data">
+                  <input type="hidden" name="st_id" id="st_id" value="{{ f.st_id }}">
+                  {{ libs.input('模板名称', 'st_name', f.st_name, required='required') }}
+                  <div class="form-group" style="margin-bottom: 7%;">
+                      <div class="col-lg-4"></div>
+                      <div class="col-lg-8">
+                          <a type="button" class="btn btn-primary" id="st_save">{{ '提交' }}</a>
+                      </div>
+                  </div>
+              </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">规格列表</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="GET" enctype="multipart/form-data">
+              {{ libs.input('规格键', 'spec_key', f.spec_key, required='required') }}
+              {{ libs.input('规格值', 'spec_value', f.spec_value, required='required') }}
+              {{ libs.input('排序', 'sort_order', f.sort_order, required='required') }}
+              </form>
+              <div class="form-group" style="margin-bottom: 7%;">
+                  <div class="col-lg-4"></div>
+                  <div class="col-lg-8">
+                      <a type="button" class="btn btn-primary" id="spec_button">{{ '提交' }}</a>
+                  </div>
+              </div>
+                <table class="table table-hover">
+                  <thead>
+                      <tr>
+                          <th>ID</th>
+                          <th>规格键</th>
+                          <th>规格值</th>
+                          <th>排序</th>
+                          <th>增加时间</th>
+                          <th>移除</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                  {% for s in spec_list %}
+                      <tr>
+                          <td>{{ s.spec_id }}</td>
+                          <td>{{ s.spec_key }}</td>
+                          <td>{{ s.spec_value }}</td>
+                          <td>{{ s.sort_order }}</td>
+                          <td>{{ s.add_time|format_timestamp }}</td>
+                          <td><a href="javascript:;" onclick="javascript:spec_delete({{ s.spec_id }}, this);">删除</a></td>
+                      </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+        {#         {{ libs.pagination_html(pagination) }} #}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block footer %}
+<script type="text/javascript">
+// 修改模板名称
+$('a#st_save').click(function(){
+    var st_id = $('#st_id').val();
+    var st_name = $('#st_name').val();
+    $.get('/goods/st_save', {'st_id':st_id, 'st_name':st_name}, function(res){
+        if (res != 'ok'){
+            window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+            return false;
+        }else{
+            window.wxc.xcConfirm('修改成功！', window.wxc.xcConfirm.typeEnum.success);
+            var t=setTimeout("window.location.href=''",1000);
+        }
+    });
+});
+
+// 新增规格
+$("a#spec_button").click(function(){
+    var st_id = $("#st_id").val();
+    var spec_key = $("#spec_key").val();
+    var spec_value = $("#spec_value").val();
+    var sort_order = $("#sort_order").val();
+    if (spec_key == ''){
+      window.wxc.xcConfirm('规格键不能为空', window.wxc.xcConfirm.typeEnum.info);
+      $('a.sgBtn.ok').click(function(){
+        $("input[name=spec_key]").focus();
+      });
+      return;
+    }
+    if (spec_value == ''){
+      window.wxc.xcConfirm('规格值不能为空', window.wxc.xcConfirm.typeEnum.info);
+      $('a.sgBtn.ok').click(function(){
+        $("input[name=spec_value]").focus();
+      });
+      return;
+    }
+    $.get('/goods/spec_add', {'st_id':st_id, 'spec_key':spec_key, 'spec_value':spec_value, 'sort_order':sort_order}, function(res){
+      if ( res != 'ok'){
+        window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+        return false;
+      }else{
+        window.wxc.xcConfirm('新增成功！', window.wxc.xcConfirm.typeEnum.success);
+        window.location.href = "";
+      }
+    });
+});
+
+// 移除规格
+function spec_delete(spec_id, adom) {
+    window.wxc.xcConfirm('确定要移除该规格吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/goods/s_delete', {'spec_id':spec_id}, function(res){
+            if (res != 'ok'){
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            window.wxc.xcConfirm('移除成功！', window.wxc.xcConfirm.typeEnum.success);
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+</script>
+{% endblock %}

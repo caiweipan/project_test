@@ -1,0 +1,176 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/order/') }}">一元购订单列表</a></li>
+{% endblock %}
+
+{% block body %}
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">订单基本信息 <a id="order_tran_list" name="order_tran_list" type="button" class="btn btn-primary btn-xs" style="float:right;" href="{{ url_for('order.order_tran_list', order_id=order.order_id) }}">订单交易列表</a></div>
+            <div class="ibox-content">
+                <table class="table">
+                    <tr><th>订单id</th><td>{{ order.order_id }}</td></tr>
+                    <tr><th>下单时间</th><td>{{ order.add_time|format_timestamp }}</td></tr>
+                    <tr><th>订单状态</th><td><label class="label">{{ const.ORDER_STATUS.get(order.order_status) }}</label></td></tr>
+                    <tr><th>订单金额</th><td>￥{{ order.order_amount }}</td></tr>
+                    <tr><th>优惠券金额</th><td>￥{{ order.discount_amount }}</td></tr>
+                    <tr>
+                        <th>使用优惠券</th>
+                        <td>
+                        {% for coupon in coupon_list %}
+                            <span>
+                                <a href="/coupon/user_coupon/?coupon_id={{ coupon.coupon_id }}">{{ coupon.coupon_id }}</a>
+                            </span>&nbsp;&nbsp;&nbsp;&nbsp;
+                        {% endfor %}
+                        </td>
+                    </tr>
+                    <tr><th>应付金额</th><td>￥{{ order.pay_amount  }}</td></tr>
+                    <tr><th>实付金额</th><td>￥{{ order.paid_amount  }}</td></tr>
+                    <tr><th>支付状态</th>
+                        <td>
+                        {% set pay_label_class = 'label-danger' if order.pay_status == 2 else 'label-warning' %}
+                        <label class="label {{ pay_label_class }}">{{ const.PAY_STATUS.get(order.pay_status) }}</label>
+                        </td>
+                    </tr>
+                    <tr><th>一元购活动期数列表</th><td>{{ order.section_number_list }}</td></tr>
+                    <tr><th>订单说明</th><td><a order_id="{{ order.order_id }}" id="order_desc_{{ order.order_id }}" class="order_desc" data-tooltip="{{ order.order_desc }}">{{ order.order_desc|striptags|truncate(18, Ture) }}</a></td></tr>
+                    <tr><th>优惠说明</th><td>{{ order.discount_desc|striptags|truncate(18, Ture) }}</td></tr>
+                    <tr><th>支付方式</th><td>{{ order.pay_method }}</td></tr>
+                    <tr><th>支付类型</th><td>{{ const.PAY_TYPE.get(order.pay_type, '默认') }}</td></tr>
+                    <tr><th>支付流水号</th><td>{{ order.pay_tran_id }}</td></tr>
+                    <tr><th>付款时间</th><td>{{ order.paid_time|format_timestamp }}</td></tr>
+
+                    <tr><th>订单里程碑</th><td>{{ const.PAY_TYPE.get(order.milestone_status, '默认') }}</td></tr>
+                    <tr><th>订单里程碑描述</th><td>{{ order.milestone_text }}</td></tr>
+                    <tr><th>是否已经评价</th><td>{{ const.IS_COMMENT.get(order.is_comment, '默认') }}</td></tr>
+                    <tr><th>更新时间</th><td>{{ order.update_time|format_timestamp }}</td></tr>
+
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">订单快递配送信息</div>
+            <div class="ibox-content">
+        {% if order.shipping_status == 1 and order.deliver_status == 0 and is_diliver == 1%}
+            <form class="form-horizontal wizard" method="POST" action="{{ url_for('order.shipping', order_id=order.order_id, order_type=1) }}">
+                {{ libs.dbselect('物流快递', 'shipping_id', order.shipping_id, shipping_list, 'shipping_name', 'shipping_id', required='required') }}
+                {{ libs.input('快递单号', 'shipping_sn', required='required') }}
+                {{ libs.submit('发货') }}
+            </form>
+        {% endif %}
+                <table class="table">
+                    <tr><th>用户名称</th><td>{{ address.name }}</td></tr>
+                    <tr><th>手机号码</th><td>{{ address.mobile }}</td></tr>
+                    <tr><th>省市区</th><td>{{ address.province }}{{ address.city }}{{ address.district }}</td></tr>
+                    <tr><th>收货地址</th><td>{{ address.address }}</td></tr>
+                    <tr><th>邮编</th><td>{{ address.zip }}</td></tr>
+                    <tr><th>地址类型</th><td>{{ const.OA_TYPE.get(address.oa_type, '默认') }}</td></tr>
+                    <tr><th>快递ID</th><td>{{ order.shipping_id }}</td></tr>
+                    <tr><th>快递名称</th><td>{{ order.shipping_name }}</td></tr>
+                    <tr><th>快递费用</th><td>{{ order.shipping_amount }}</td></tr>
+                    <tr><th>快递单号</th><td>{{ order.shipping_sn }}</td></tr>
+                    <tr><th>物流状态</th><td><span style="color: red;">{{ status_text }}</span></td></tr>
+                    <tr><th>发货状态</th><td>{{ const.SHIPPING_STATUS.get(order.shipping_status, '默认') }}</td></tr>
+                    <tr><th>发货时间</th><td>{{ order.shipping_time|format_timestamp }}</td></tr>
+                    <tr><th>收货状态</th><td>{{ const.DELIVER_STATUS.get(order.deliver_status, '默认') }}</td></tr>
+                    <tr><th>收货时间</th><td>{{ order.deliver_time|format_timestamp }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">用户信息</div>
+            <div class="ibox-content">
+                <table class="table">
+                    <tr><th>用户uid</th><td>{{ user.uid }}</td></tr>
+                    <tr><th>系统</th><td>{{ user_device }}</td></tr>
+                    <tr><th>联系人</th><td>{{ user.nickname }}</td></tr>
+                    <tr><th>联系人手机</th><td>{{ user.mobile }}</td></tr>
+                    <tr><th>用户备注</th><td>{{ order.user_remark }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% if order.shipping_status == 2%}
+    <div class="col-lg-4">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">物流信息</div>
+            <div class="ibox-content">
+                <table class="table">
+                {% for d in data %}
+                    <tr><th>{{ d.get('time', '')}}</th><td>{{ d.get('context', '')}}</td></tr>
+                {% endfor %}
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="col-lg-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title"><h4>订单商品列表</h4></div>
+            <div class="ibox-content">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>ID</th>
+                            <th>订单ID</th>
+                            <th>商品名称</th>
+                            <th>商品图片</th>
+                            <th>商品销售数量</th>
+                            <th>商品销售价格</th>
+                            <th>商品属性ID序列</th>
+                            <th>商品属性名称序列</th>
+                            <th>一元购活动名称</th>
+                            <th>一元购活动期数</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for goods in order_goods_list %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ goods.og_id }}</td>
+                            <td>{{ goods.order_id }}</td>
+                            <td>{{ goods.goods_name }}</td>
+                            <td><img src="{{ goods.goods_img }}" class="img-responsive" style="max-width: 50px;"></td>
+                            <td>{{ goods.goods_num }}</td>
+                            <td>{{ goods.goods_price }}</td>
+                            <td>{{ goods.sku }}</td>
+                            <td>{{ goods.sku_name }}</td>
+                            <td>{{ goods.lottery_name }}</td>
+                            <td>{{ goods.section_number }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block footer %}
+<script type="text/javascript">
+$(document).ready( function(){
+    $('a.order_desc').each(function(){
+        var $a = $(this);
+        var order_id = $a.attr('order_id');
+        $('#order_desc_'+order_id).darkTooltip({
+            size:'large',
+            trigger:'click',
+            animation:'flipIn',
+            gravity:'west',
+            modal: false,
+        });
+    })
+});
+</script>
+{% endblock %}

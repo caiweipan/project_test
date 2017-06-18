@@ -1,0 +1,130 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'栏目ID', 'name':'gc_id'},
+        {'label':'栏目名称', 'name':'column_name',},
+        {'label':'状态', 'name':'status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'显示', 'value':'1'},
+                {'name':'不显示', 'value':'0'},
+            ]
+        },
+        {'label':'增加时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<table class="table ">
+    <thead>
+        <tr>
+            <th>栏目ID</th>
+            <th>栏目名称</th>
+            <th>状态</th>
+            <th>简介</th>
+            <th width="18%">排序</th>
+            <th>状态</th>
+            <th>增加时间</th>
+            <th>查看详情</th>
+            <th>移除商品栏目</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for  column in column_list %}
+        <tr>
+            <td>{{ column.gc_id }}</td>
+            <td>{{ column.column_name }}</td>
+            <td style="padding-bottom: 0px;padding-top: 0px;">
+                <div class="lightBoxGallery" style="text-align: left;">
+                    <a href="{{ column.column_img }}" title="商 品 图 片" data-gallery=""><img src="{{ column.column_img }}" style="max-width: 50px;">
+                    </a>
+                </div>
+            </td>
+            <td><a id="brief_{{ column.gc_id }}" gc_id="{{ column.gc_id }}" class="brief" data-tooltip="{{ column.brief }}">{{ column.brief|striptags|truncate(18, Ture) }}</a></td>
+            <td class="sort_order" gc_id="{{ column.gc_id }}">{{ column.sort_order }}</td>
+            <td>{{ const.COLUMN_STATUS.get(column.status, '默认') }}</td>
+            <td>{{ column.add_time|format_timestamp }}</td>
+            <td><a href="{{ url_for('goods.column_edit', gc_id=column.gc_id) }}">查看详情</a></td>
+            <td><a href="javascript:;" onclick="javascript:delete_column({{ column.gc_id }},this);">移除商品栏目</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+<script type="text/javascript">
+$(document).ready( function(){
+    $('a.brief').each(function(){
+        var $a = $(this);
+        var gc_id = $a.attr('gc_id');
+        $('#brief_'+gc_id).darkTooltip({
+            size:'large',
+            trigger:'click',
+            animation:'flipIn',
+            gravity:'west',
+            modal: false,
+        });
+    })
+});
+</script>
+<script type="text/javascript">
+// $(function () { $("[data-toggle='tooltip']").tooltip(); });
+$('td.sort_order').click(function(){
+    var $td = $(this);
+    var $tr = $(this).parent();
+    var gc_id = $(this).attr('gc_id');
+    var sort = $.trim($td.text());
+    var input = $("<input type='text' style='width: 30%;' value='" + sort + "'/>");
+    $td.html(input);
+    input.click(function () { return false; });
+
+    //获取焦点
+    input.trigger("focus");
+
+    //文本框失去焦点后提交内容，重新变为文本
+    input.blur(function () {
+        var new_sort = $(this).val();
+
+        //判断文本有没有修改
+        if (new_sort != sort) {
+            $.get('/goods/column_sort/modify', {'gc_id':gc_id, 'sort':sort, 'new_sort':new_sort}, function (res){
+                if (res == 'ok') {
+                    $td.html(new_sort);
+                } else {
+                    window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                    $td.html(sort);
+                    return false;
+                }
+            });
+        } else {
+            $td.html(sort);
+        }
+    });
+});
+</script>
+<script type="text/javascript">
+function delete_column(gc_id, adom) {
+    var txt = '确定要移除该商品栏目吗？'
+    window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/goods/column/delete', {'gc_id':gc_id}, function(res){
+            if (res != 'ok'){
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            window.wxc.xcConfirm('删除成功！', window.wxc.xcConfirm.typeEnum.success);
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+</script>
+{% endblock %}
+

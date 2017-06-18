@@ -1,0 +1,137 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'快递名称', 'name':'shipping_name',},
+        {'label':'快递公司编码', 'name':'shipping_code',},
+        {'label':'是否默认快递', 'name':'is_default', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'是', 'value':'1'},
+                {'name':'否', 'value':'0'},
+            ]},
+    ]
+%}
+
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>物流快递ID</th>
+            <th>快递名称</th>
+            <th>快递费</th>
+            <th>满多少包邮</th>
+            <th>追踪网址</th>
+            <th>快递公司编码</th>
+            <th>是否默认</th>
+            <th>快递说明</th>
+            <th>编辑</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for shipping in shipping_list %}
+        <tr>
+            <td>{{ shipping.shipping_id }}</td>
+            <td>{{ shipping.shipping_name }}</td>
+            <td>{{ shipping.shipping_amount }}</td>
+            <td>{{ shipping.free_limit_amount }}</td>
+            <td>{{ shipping.tracking_url }}</td>
+            <td>{{ shipping.shipping_code }}</td>
+            <td>{{ const.YES_OR_NO.get(shipping.is_default, '') }}</td>
+            <td>{{ shipping.shipping_desc }}</td>
+            <td><a href="{{ url_for('shipping.edit',shipping_id=shipping.shipping_id)}}">编辑</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{{ libs.pagination_html(pagination) }}
+
+<!-- 新增快递弹出层 -->
+<div class="modal fade" id="add_sport_attr_modal" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="margin-top: 15%;">
+            <form class="form-horizontal" id="attr_modal_form" autocomplete="off" method="post" action="{{ url_for('shipping.add')}}" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">关闭</span>
+                    </button>
+                    <h4 class="modal-title">新增快递</h4>
+                </div>
+                <div class="modal-body">
+                    {{ libs.input('快递名称', 'shipping_name', '', required='required', help=" ") }}
+                    {{ libs.input('快递费', 'shipping_amount', '',type='number', required='required') }}
+                    {{ libs.input('满多少包邮', 'free_limit_amount', '',type='number', required='required') }}
+                    {{ libs.input('快递公司编码', 'shipping_code', '', required='required') }}
+                    {{ libs.select('是否默认', 'is_default', '',
+                                    [('请选择……','-1'),
+                                    ('是', '1'),
+                                    ('否','0')], required='required') }}
+                    {{ libs.textarea('快递说明', 'shipping_desc', '', required='required') }}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary" id="shipping_add">新增快递</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$("a.add_new").click(function(){
+    $('#add_sport_attr_modal').modal({backdrop:false});
+});
+$('a#shipping_add').click(function(){
+    $.get('/shipping/add', {'shipping_name':shipping_name, 'shipping_amount':shipping_amount, 'free_limit_amount':free_limit_amount, 'shipping_code':shipping_code, 'is_default':is_default, 'shipping_desc':shipping_desc}, function(res){
+        if (res == 'ok') {
+            window.wxc.xcConfirm('新增快递成功！', window.wxc.xcConfirm.typeEnum.info);
+            window.location.href = ''
+        }else{
+            window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.info);
+            return false;
+        }
+    });
+});
+//实时去判断快递名称
+$('span.help-block').hide();
+$("input[name=shipping_name]").on("input propertychange",function(){
+    var shipping_name = $(this).val();
+    if(shipping_name != ''){
+        $.ajax({
+            url: "/shipping/check_shipping_name",
+            dataType:'json',//服务器返回json格式数据
+            type:'get',//HTTP请求类型
+            timeout:5000,//超时时间设置为10秒；
+            headers:{'Content-Type':'application/json'},
+            data:{'shipping_name': $(this).val()},
+            success: function( json ) {
+                var msg = json.msg
+                if (msg == 'shipping'){
+                    $("input[name=shipping_name]").siblings('span').show();
+                    $("input[name=shipping_name]").siblings('span').html('快递名称已经存在!');
+                    $("input[name=shipping_name]").siblings("span").css('color', 'red');
+                    $('button#shipping_add').prop('disabled', true);
+                }else{
+                    $('span.help-block').hide();
+                    $('button#shipping_add').prop('disabled', false);
+                }
+            },
+            error: function(xhr, type){
+                window.wxc.xcConfirm('网络错误', window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+        });
+    }else{
+    }
+});
+</script>
+{% endblock %}

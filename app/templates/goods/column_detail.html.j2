@@ -1,0 +1,171 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+
+<li><a href="{{ url_for('goods.column_list')}}">商品栏目列表</a></li>
+{% endblock %}
+
+{% block body %}
+<link rel="stylesheet" href="//apps.bdimg.com/libs/jqueryui/1.10.4/css/jquery-ui.min.css">
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="POST" action="{{ url_for('goods.column_save') }}" enctype="multipart/form-data">
+                  {{ libs.input('栏目名称', 'column_name', f.column_name, required='required') }}
+                  <input id="gc_id" name="gc_id" type="hidden" value="{{ gc_id }}">
+                  {{ libs.img('封面原图', 'column_img', f.column_img, help='一张照片') }}
+                  {% set sort_order = f.sort_order if f else 0|toint %}
+                  {{ libs.select('状态', 'status', f.status, [('请选择……',''),('显示', '1'),('不显示','0')], required='required') }}
+                  {{ libs.input('排序', 'sort_order', sort_order, type='number', required='required min=0 max=1000 step=1', help='值大的排在前面') }}
+                  {{ libs.textarea('简介', 'brief', f.brief, required='required') }}
+                  {{ libs.submit() }}
+              </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">栏目商品列表<button id="_column_goods_add" name="_column_goods_add" class="btn btn-primary btn-xs" style="float:right;">新增栏目商品</button>
+            </div>
+            <div class="ibox-content">
+              <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>栏目ID</th>
+                        <th>商品</th>
+                        <th width="15%;">商品排序</th>
+                        <th>添加时间</th>
+                        <th>&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for column_goods in column_goods_list %}
+                    <tr>
+                        <td>{{ column_goods.gic_id }}</td>
+                        <td>{{ column_goods.goods_name }}</td>
+                        <td class="sort_order" gic_id="{{ column_goods.gic_id }}">{{ column_goods.sort_order }}</td>
+                        <td>{{ column_goods.add_time|format_timestamp }}</td>
+                        <td><a href="javascript:;" onclick="javascript:column_goods_delete({{ column_goods.gic_id }}, this);">移除栏目商品</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+              </table>
+      {#         {{ libs.pagination_html(pagination) }} #}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="column_goods_modal" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form class="form-horizontal" method="POST" id="column_goods_modal_form" action="{{url_for('goods.goods_column_save')}}" autocomplete="off" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">关闭</span></button>
+                    <h4 class="modal-title">新增栏目商品</h4>
+                </div>
+                <div class="modal-body">
+                    {{ libs.dbselect('商品名称', 'goods_id', '', goods_list, 'goods_name', 'goods_id', required='required') }}
+                    {{ libs.input('排序', 'sort_order_modal', 0, type='number', required='required min=0 max=1000 step=1', help='值大的排在前面') }}
+                    <input type="hidden" name="ag_id" value="{{ f.ag_id }}" id="ag_id">
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="submit" id="submit_modal" class="btn btn-primary submit">提交</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$("#_column_goods_add").click(function(){
+    $('#select_gc_id').val();
+    $('#goods_id').val();
+    $('#sort_order').val();
+    $('#column_goods_modal').modal({backdrop:false});
+});
+function column_goods_delete(gic_id, adom) {
+    var txt = '确定要移除栏目商品吗？'
+    var gc_id = $('#gc_id').val();
+    window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/goods/column_goods/delete', {'gic_id':gic_id}, function(res){
+            if (res != 'ok'){
+                var txt= res;
+                window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            var txt='移除成功！';
+            window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.success);
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+</script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+  // $('button:submit').click(function(){
+  //   var tags = $('#tags').val();
+  //   var gc_id = $('#gc_id').val();
+  //   if (tags !='' && gc_id <= 0){
+  //     window.wxc.xcConfirm('请选择上级分类', window.wxc.xcConfirm.typeEnum.error);
+  //     return false;
+  //   }
+  // });
+  $("#submit_modal").click(function(){
+    var goods_id = $('#goods_id').val();
+    var sort_order = $('#sort_order_modal').val();
+    var gc_id = $('#gc_id').val();
+    $.get('/goods/goods_column/save', {'gc_id':gc_id, 'goods_id':goods_id, 'sort_order':sort_order}, function(res){
+      if ( res != 'ok'){
+        window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.info);
+        return false;
+      }
+      if (res == 'ok'){
+        window.location.href = "/goods/column/edit?gc_id="+gc_id;
+      }
+    });
+  });
+});
+</script>
+<script type="text/javascript">
+$('td.sort_order').click(function(){
+    var $td = $(this);
+    var $tr = $(this).parent();
+    var gic_id = $(this).attr('gic_id');
+    var sort = $.trim($td.text());
+    var input = $("<input type='text' style='width: 80%;' value='" + sort + "'/>");
+    $td.html(input);
+    input.click(function () { return false; });
+
+    //获取焦点
+    input.trigger("focus");
+    //文本框失去焦点后提交内容，重新变为文本
+    input.blur(function () {
+        var new_sort = $(this).val();
+        //判断文本有没有修改
+        if (new_sort != sort) {
+            $.get('/goods/in_column_sort/modify', {'gic_id':gic_id, 'sort':sort, 'new_sort':new_sort}, function (res){
+                if (res == 'ok') {
+                    $td.html(new_sort);
+                } else {
+                    window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                    $td.html(sort);
+                    return false;
+                }
+            });
+        } else {
+            $td.html(sort);
+        }
+    });
+});
+</script>
+{% endblock %}

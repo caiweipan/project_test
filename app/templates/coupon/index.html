@@ -1,0 +1,68 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'批次名称', 'name':'cb_name',},
+        {'label':'优惠券名称', 'name':'coupon_name',},
+        {'label':'是否有效', 'name':'is_valid', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'是', 'value':'1'},
+                {'name':'否', 'value':'0'},
+            ]},
+        {'label':'增加时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+
+{% block data_body %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>批次号</th>
+                <th>增加时间</th>
+                <th>批次名称</th>
+                <th>优惠券名称</th>
+                <th>优惠券金额</th>
+                <th>满多少可用</th>
+
+                <th>有效期</th>
+                <th>发行数量</th>
+                <th>已领取数量</th>
+                <th>使用数量</th>
+                <th>是否有效</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for coupon in coupon_list %}
+            <tr>
+                <td><a href="{{ url_for('coupon.detail', cb_id=coupon.cb_id) }}">{{ coupon.cb_id }}</a></td>
+                <td>{{ coupon.add_time|format_timestamp }}</td>
+                <td>{{ coupon.cb_name }}</td>
+                <td><a href="{{ url_for('coupon.detail', cb_id=coupon.cb_id) }}">{{ coupon.coupon_name }}</a></td>
+                <td>￥{{ coupon.coupon_amount }}</td>
+                <td>￥{{ coupon.limit_amount }}</td>
+
+                <td>{{ coupon.begin_time|format_timestamp('%Y-%m-%d') }} - {{ coupon.end_time|format_timestamp('%Y-%m-%d') }}</td>
+                <td>{{ coupon.publish_num }}</td>
+                <td>{{ coupon.give_num  }}</td>
+                <td>{{ coupon.use_num }}</td>
+                <td>{{ const.YES_OR_NO.get(coupon.is_valid, '未知') }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{{ libs.pagination_html(pagination) }}
+<script type="text/javascript">
+$("a.add_new").click(function(){
+    window.location.href = '/coupon/add';
+});
+</script>
+{% endblock %}

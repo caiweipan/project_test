@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <title>一膳</title>
+
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/font-awesome/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/static/css/animate.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/static/css/xcConfirm.css"/>
+    <link href="/static/css/plugins/blueimp/css/blueimp-gallery.min.css" rel="stylesheet">
+    <script src="http://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/xcConfirm.js" type="text/javascript" charset="utf-8"></script>
+
+    <!-- gallery -->
+    <script src="/static/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+    <script src="/static/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+    <script src="/static/js/plugins/blueimp/jquery.blueimp-gallery.min.js"></script>
+</head>
+
+<body class="gray-bg">
+
+    <div class="loginColumns animated fadeInDown">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="lightBoxGallery" style="text-align: left;">
+                    <a href="http://p1.meituan.net/deal/7415fa32d4ce028388279e7270ede744389845.jpg" title="封 面 图" data-gallery=""><img src="http://p1.meituan.net/deal/7415fa32d4ce028388279e7270ede744389845.jpg" style="max-width: 100%;" class="img-responsive">
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="ibox-content">
+                    {% if errmsg %}
+                    <div class="alert alert-warning">{{ errmsg }}</div>
+                    {% endif %}
+                    <h1 class="font-bold" style="margin-left: 40%;">一 膳</h1>
+                    <form class="m-t" role="form" action="" method="post" autocomplete="off">
+                        <div class="form-group">
+                            <input type="text" autocomplete="off" id="mobile" name="mobile" class="form-control" placeholder="手机号码" required="" value="{{ mobile }}">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" autocomplete="off" name="password" class="form-control" placeholder="密码" required="" value="{{ password }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary block full-width m-b">登录</button>
+                    </form>
+                    <a href="javascript:;" onclick="javascript:forget_password(this);" data-toggle="modal">
+                        <small>忘记密码?</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="blueimp-gallery" class="blueimp-gallery">
+        <div class="slides"></div>
+        <h3 class="title"></h3>
+        <a class="prev">‹</a>
+        <a class="next">›</a>
+        <a class="close">×</a>
+        <a class="play-pause"></a>
+        <ol class="indicator"></ol>
+    </div>
+</body>
+<script type="text/javascript">
+
+// 步骤编辑
+function forget_password(adom) {
+    $('#mobile_modal').val();
+    $('#code').val();
+    $('#password1_modal').val();
+    $('#password2_modal').val();
+    $('#forget_password_modal').modal({backdrop:false});
+}
+</script>
+</html>
+
+<!-- 项目步骤弹出层 -->
+<div class="modal fade" id="forget_password_modal" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form class="form-horizontal" method="GET" id="password_modal_form" autocomplete="off">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">关闭</span></button>
+                    <h4 class="modal-title">忘记密码</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="col-lg-3 col-lg-offset-1 control-label">手机号码</label>
+                        <div class="col-lg-5">
+                            <input type="mobile" autocomplete="off" placeholder="请输入手机号码" value="" name="mobile_modal" id="mobile_modal" class="form-control" required autocomplete="off">
+                        </div>
+                        <input type="button" id="getcode" class="btn btn-primary col-lg-2" value="获取验证码">
+                    </div>
+
+                    <div id="reset_info" style="display: none;">
+                    <div class="form-group">
+                        <label for="code" class="col-lg-4 control-label">验证码</label>
+                        <div class="col-lg-8">
+                            <input class="form-control" id="code" name="code" placeholder="验证码" required autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-lg-4 control-label">新密码</label>
+                        <div class="col-lg-8">
+                            <input type="password" autocomplete="off" placeholder="请输入新密码" value="" name="password1" id="password1_modal" class="form-control" required autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-lg-4 control-label">重复新密码</label>
+                        <div class="col-lg-8">
+                            <input type="password" autocomplete="off" placeholder="请重复新密码" value="" name="password2" id="password2_modal" class="form-control" required autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary submit">提交</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<style type="text/css">
+    .sgBtn{width: 135px; height: 35px; line-height: 55px; margin-left: 10px; margin-top: 10px; text-align: center; background-color: #0095D9; color: #FFFFFF; float: left; border-radius: 5px;}
+</style>
+<script type="text/javascript">
+$(document).ready(function() {
+    document.getElementById("getcode").onclick=function(){
+        // $('#reset_info').hide();
+        var mobile = $('#mobile_modal').val();
+        var ismobile   = /^(((13[0-9]{1})|(14[0-9]{1})|(15[0-9]{1})|(17[0-9]{1})|(18[0-9]{1}))+\d{8})$/;
+        if ($("#mobile_modal").val() == "") {
+            var txt=  "手机号码不能为空！";
+            window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.info);
+            //$("#moileMsg").html("<font color='red'>手机号码不能为空！</font>");
+            $("#mobile_modal").focus();
+            return false;
+        }
+
+        if(!ismobile.test($("#mobile_modal").val()))
+        {
+            var txt=  "请输入有效手机号码！";
+            window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.warning);
+            return false;
+        }
+        $.post('/getcode', {'mobile':mobile}, function(res){
+            if (res != 'ok') {
+                var txt=res;
+                window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.info);
+                // alert(res);
+                return false;
+            }
+
+            $('#reset_info').show();
+            var txt=  "请查收验证码";
+            window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.info);
+        });
+        var wait=60;
+        time(this);
+        function time(o) {
+            if (wait == 0) {
+                o.removeAttribute("disabled");
+                o.value="获取验证码";
+                wait = 60;
+            } else {
+                o.setAttribute("disabled", true);
+                o.value="重新发送(" + wait + ")";
+                wait--;
+                setTimeout(function() {
+                time(o)
+                },
+            1000)
+            }
+        }
+    }
+});
+</script>
+<!-- 弹框  end  -->
+
+<script type="text/javascript">
+$("form:last").submit( function () {
+    var code      = $('#code').val();
+    var mobile    = $('#mobile_modal').val();
+    var password1 = $('#password1_modal').val();
+    var password2 = $('#password2_modal').val();
+    var ismobile  = /^(((13[0-9]{1})|(14[0-9]{1})|(15[0-9]{1})|(17[0-9]{1})|(18[0-9]{1}))+\d{8})$/;
+    if ($("#mobile_modal").val() == "") {
+        var txt=  "手机号码不能为空！";
+        window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.info);
+        //$("#moileMsg").html("<font color='red'>手机号码不能为空！</font>");
+        $("#mobile_modal").focus();
+        return false;
+    }
+
+    if(!ismobile.test($("#mobile_modal").val()))
+    {
+        var txt=  "请输入有效手机号码！";
+        window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.warning);
+        return false;
+    }
+    if (password1 != password2) {
+        var txt='密码输入不一致,请重新输入！';
+        window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.info);
+        return false;
+    }
+    if (password1.length < 6) {
+        var txt='密码长度不能小于6位！';
+        window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.info);
+        return false;
+    }
+    $.get('/forget/password', {'code':code, 'mobile':mobile, 'password1':password1}, function(res){
+        if (res == 'ok') {
+            var txt='恭喜你,重置密码成功！';
+            window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.success);
+            var wait=1;
+            time('.xcConfirm.popBox');
+            function time(o) {
+                if (wait == 0) {
+                    wait = 1;
+                    window.location.href = "/signin?mobile="+mobile+'&password='+password1;
+                } else {
+                    wait--;
+                    setTimeout(function() {
+                    time(o)
+                    },
+                1000)
+                }
+            }
+        }
+        if (res != 'ok'){
+            var txt=res;
+            window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.info);
+            return false;
+        }
+    });
+    return false;
+});
+// 检验是否是固定电话
+function istell(str)
+{
+var result=str.match(/\d{3}-\d{8}|\d{4}-\d{7}/);
+if(result==null) return false;
+return true;
+}
+</script>

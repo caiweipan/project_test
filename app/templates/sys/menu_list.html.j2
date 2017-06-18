@@ -1,0 +1,129 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'端点', 'name':'endpoint',},
+        {'label':'端点名称', 'name':'endpoint_name',},
+        {'label':'菜单类型', 'name':'menu_type', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'主菜单', 'value':'0'},
+                {'name':'子菜单', 'value':'1'},
+            ]},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+{% endblock %}
+
+{% block data_body %}
+{% set MENU_TYPE = {0:'主菜单'}%}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>菜单id</th>
+            <th>端点</th>
+            <th>端点名称</th>
+            <th>菜单icon</th>
+            <th>菜单类型</th>
+            <th>排序</th>
+            <th>编辑</th>
+            <th>移除</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for menu in menu_list %}
+        <tr>
+            <td>{{ menu.permission_id }}</td>
+            <td>{{ menu.endpoint }}</td>
+            <td>{{ menu.endpoint_name }}</td>
+            <td>{{ menu.endpoint_icon }}</td>
+            <td>{{ MENU_TYPE.get(menu.parent_id, '子菜单')}}</td>
+            <td>{{ menu.sort_order }}</td>
+            <td><a href="{{ url_for('sys.menu_edit', permission_id=menu.permission_id)}}">编辑</a></td>
+            <td><a href="javascript:;" onclick="javascript:delete_menu({{ menu.permission_id }}, this);">移除</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+// $(function () { $("[data-toggle='tooltip']").tooltip(); });
+function delete_menu(permission_id, adom) {
+    window.wxc.xcConfirm('确定要移除该菜单吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/sys/delete_menu', {'permission_id':permission_id}, function(res){
+            if (res != 'ok'){
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            window.wxc.xcConfirm('移除成功！', window.wxc.xcConfirm.typeEnum.success);
+            $(adom).parents('tr').remove();
+            $count = $("a[href='javascript:;'].btn.btn-white").html()
+            img_count = Number($count.slice(0, -1));
+            if (img_count == 1){
+                $('#pagination').html('暂无数据');
+            }else{
+                var img_count = img_count-1;
+                $("a[href='javascript:;'].btn.btn-white").html(img_count+'条');
+            }
+            window.location.href = '';
+        });
+    });
+}
+$(document).ready( function(){
+    $("#add_new").click(function(){
+        window.location.href = '/sys/menu_add';
+    });
+    $('a.adv_desc').each(function(){
+        var $a = $(this);
+        var adv_id = $a.attr('adv_id');
+        $('#adv_desc_'+adv_id).darkTooltip({
+            size:'large',
+            trigger:'click',
+            animation:'flipIn',
+            gravity:'west',
+            modal: false,
+        });
+    })
+    $('td.sort_order').click(function(){
+        var $td = $(this);
+        var $tr = $(this).parent();
+        var adv_id = $(this).attr('adv_id');
+        var sort = $.trim($td.text());
+        var input = $("<input type='text' style='width: 50%;' value='" + sort + "'/>");
+        $td.html(input);
+        input.click(function () { return false; });
+
+        //获取焦点
+        input.trigger("focus");
+
+        //文本框失去焦点后提交内容，重新变为文本
+        input.blur(function () {
+            var new_sort = $(this).val();
+
+            //判断文本有没有修改
+            if (new_sort != sort) {
+                $.get('/sys/ad_sort/modify', {'adv_id':adv_id, 'sort':sort, 'new_sort':new_sort}, function (res){
+                    if (res == 'ok') {
+                        $td.html(new_sort);
+                    } else {
+                        window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                        $td.html(sort);
+                        return false;
+                    }
+                });
+            } else {
+                $td.html(sort);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

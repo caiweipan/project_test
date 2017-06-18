@@ -1,0 +1,100 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+
+<li><a href="{{ url_for('power.role_admin')}}">角色管理</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">添加用户角色</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="POST" action="{{ url_for('power.admin_save') }}" enctype="multipart/form-data">
+                <input type="hidden" name="uid" id="uid" value="{{ f.uid }}">
+                {{ libs.dbselect('角色名称', 'role_id', role_id, role_list, 'role_name', 'role_id', required='required') }}
+                {{ libs.input('手机号码', 'mobile', mobile|default(''), required='required') }}
+                <span class="help-block m-b-none" style="color: red;margin-left: 35%;margin-top: 0%;margin-bottom: 1%;">默认密码为：888888</span>
+                {{ libs.submit() }}
+              </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-6 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">用户角色列表</div>
+            <div class="ibox-content">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>主键id</th>
+                            <th>用户id</th>
+                            <th>头像</th>
+                            <th>昵称</th>
+                            <th>角色</th>
+                            <th>手机号码</th>
+                            <th>移除</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for admin in admin_list %}
+                        <tr>
+                            <td>{{ admin.id }}</td>
+                            <td>{{ admin.uid }}</td>
+                            <td style="padding-bottom: 0px;padding-top: 0px;">
+                                <div class="lightBoxGallery" style="text-align: left;">
+                                    <a href="{{ admin.avatar }}" title="头  像" data-gallery=""><img src="{{ admin.avatar }}" style="max-width: 50px;">
+                                    </a>
+                                </div>
+                            </td>
+                            <td><a href="{{ url_for('user.user_detail', uid=admin.uid) }}">{{ admin.nickname|striptags|truncate(18, Ture) }}</a></td>
+                            <td>{{ role_dict.get(admin.role_id, '') }}</td>
+                            <td>{{ admin.mobile }}</td>
+                            <td><a href="javascript:;" onclick="javascript:official_delete({{ admin.id }}, {{ admin.role_id }},this);">移除</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {{ libs.pagination_html(pagination) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+function official_delete(id, role_id, adom) {
+    window.wxc.xcConfirm('确定要移除此人员角色吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/power/admin_delete', {'id':id, 'role_id':role_id}, function(res){
+            if (res != 'ok'){
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            window.wxc.xcConfirm('移除成功！', window.wxc.xcConfirm.typeEnum.success);
+            var wait=1;
+            time('.xcConfirm.popBox');
+            function time(o) {
+                if (wait == 0) {
+                    wait = 1;
+                    window.location.href = "/power/admin_add";
+                } else {
+                    wait--;
+                    setTimeout(function() {
+                    time(o)
+                    },
+                1000)
+                }
+            }
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+</script>
+{% endblock %}

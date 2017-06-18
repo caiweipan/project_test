@@ -1,0 +1,618 @@
+{# form表单宏定义 #}
+
+{# 分页html #}
+{% macro pagination_html(pagination, is_row=True) -%}
+    {% if is_row %}
+    <div class="row">
+        <div class="col-lg-12">
+            {{ build_pagination_html(pagination) }}
+        </div>
+    </div>
+    {% else %}
+        {{ build_pagination_html(pagination) }}
+    {% endif %}
+{%- endmacro %}
+
+
+{% macro img(label, name, value='', placeholder='', type='file', required='', help='', disabled='',margin_right='1000px') %}
+{% set errmsg = g['errmsg'] %}
+{% set errmsg_text = errmsg.get(name, '') if errmsg else '' %}
+{% set error_class = 'has-error' if errmsg_text else '' %}
+<div class="form-group {{ name }}" style="margin-bottom: 1%;">
+    <label class="col-lg-4 control-label" id="label-{{ name }}">{{ label }}</label>
+    <div class="col-lg-8 {{error_class}}" id="control-{{ name }}">
+        {% if disabled == 'yes' %}
+        <input class="form-control " id="{{ name }}" name="{{ name }}" value="{{ value|string }}" placeholder="{{ placeholder }}" type="{{ type }}" {{ required }} onchange="previewFile(this)" disabled="disabled">
+        {% else %}
+        <input class="form-control " id="{{ name }}" name="{{ name }}" value="{{ value|string }}" placeholder="{{ placeholder }}" type="{{ type }}" {{ required }} onchange="previewFile(this)">
+        {% endif %}
+        <div class="lightBoxGallery img">
+            <a href="{{ value|string }}" title="头 像" data-gallery=""><img src="{{ value|string }}" style="max-width: 280px;margin-top: 1%;margin-right: {{ margin_right }};margin-left: 0px;">
+            </a>
+        </div>
+        {% if help %}<span class="help-block m-b-none">{{ help|safe }}</span>{% endif %}
+        {% if errmsg_text %}<span class="help-block m-b-none">{{ errmsg_text }}</span>{% endif %}
+    </div>
+</div>
+<script language=javascript>
+function previewFile(adom) {
+    $input = $(this);
+    var i = $("input[type='file']").index(adom);
+    var objUrl = getObjectURL(adom.files[0]);
+    $("input[type='file']").siblings('div').find('img').eq(i).attr('src', objUrl);
+    $("input[type='file']").siblings('div').find('a').eq(i).attr('href', objUrl);
+}
+//建立一個可存取到該file的url
+function getObjectURL(file) {
+var url = null ;
+if (window.createObjectURL!=undefined) { // basic
+url = window.createObjectURL(file) ;
+} else if (window.URL!=undefined) { // mozilla(firefox)
+url = window.URL.createObjectURL(file) ;
+} else if (window.webkitURL!=undefined) { // webkit or chrome
+url = window.webkitURL.createObjectURL(file) ;
+}
+return url ;
+}
+</script>
+{% endmacro %}
+
+
+{% macro get_ranking_diff(ranking, prev_ranking) %}
+{% if ranking == 0 %}-
+{% elif prev_ranking == 0 %}-
+{% elif ranking == prev_ranking %}-
+{% elif ranking > prev_ranking %}<i class="fa fa-long-arrow-down" style='color: #ed5565; padding-right: 5px;'></i>{{ ranking-prev_ranking }}
+{% elif ranking < prev_ranking %}<i class="fa fa-long-arrow-up" style='color: #1c84c6; padding-right: 5px;'></i>{{ prev_ranking-ranking }}
+{% endif %}
+{% endmacro %}
+
+{% macro datepicker(label, name, value='', placeholder='', type='', required='', help='', class='input-daterange') %}
+{% set nvalue = value|toint %}
+{% set str_date = value if nvalue == 0 else nvalue|format_timestamp('%Y-%m-%d') %}
+<div class="form-group">
+    <label class="col-lg-4 control-label">{{ label }}</label>
+    <div class="col-lg-8">
+        <div class="input-group {{class}}">
+            <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+            <input type="text" class="form-control" value="{{ str_date }}" id="{{ name }}" name="{{ name }}" placeholder="{{ placeholder }}" {{ required }}>
+            {% if help %}<span class="help-block m-b-none">{{ help }}</span>{% endif %}
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{# 生成分页html #}
+{% macro build_pagination_html(pagination) %}
+<div class="pull-right" id="pagination">
+{% if pagination.total > 0 %}
+    <div class="btn-group" style="padding-right:10px;">
+        <a href="javascript:;" class="btn btn-white">{{ pagination.total }}条</a>
+        {% if pagination.has_prev %}<a href="{{ pagination_href(pagination.prev_num) }}" class="btn btn-white"><i class="fa fa-chevron-left"></i></a>{% endif %}
+        {% for page in pagination.iter_pages() %}
+            {% if page %}
+                {% if page != pagination.page %}
+                    <a href="{{ pagination_href(page) }}" class="btn btn-white">{{ page }}</a>
+                {% else %}
+                   <a href="javascript:;" class="btn btn-primary active">{{ page }}</a>
+                {% endif %}
+            {% else %}
+                <a href="javascript:void(0);" class="btn btn-white">…</a>
+            {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}<a href="{{ pagination_href(pagination.next_num) }}" class="btn btn-white"><i class="fa fa-chevron-right"></i></a>{% endif %}
+    </div>
+
+    <div class="btn-group" style="padding-left:12px; border-left: 1px solid #ccc;">
+        {{ pagination_change_page_size(20) }}
+        {{ pagination_change_page_size(50) }}
+        {{ pagination_change_page_size(100) }}
+    </div>
+{% else %}
+    <p>暂无数据</p>
+{% endif %}
+</div>
+{% endmacro %}
+
+{% macro pagination_href(page, page_size=None) -%}
+{% set page_size = page_size if page_size else request.view_args.get('page_size', None) %}
+{{ url_for(request.endpoint, page=page, page_size=page_size) }}{% if request.query_string %}{{ '?' + request.query_string }}{% endif %}
+{%- endmacro %}
+
+{% macro pagination_change_page_size(page_size) -%}
+{% set current_page_size = request.view_args.get('page_size', None) %}
+{% if current_page_size == page_size %}<a href="javascript:;" class="btn btn-primary active">{{ page_size }}</a>
+{% else %}<a href="{{ pagination_href(1, page_size) }}" class="btn btn-white">{{ page_size }}</a>
+{% endif %}
+{%- endmacro  %}
+
+
+{# 搜索表单 #}
+{% macro build_search_form(form_config, action="", method="GET") %}
+<form class="form" action="{{ action }}" method="{{ method }}" id="search_form">
+    <div class="row">
+        {% set args = request.args %}
+        {% for field in form_config %}
+            {% set type = field.get('type', 'input') %}
+            {% set name = field.get('name', '') %}
+            {% set input_type = field.get('input_type', 'text') %}
+            {% set value = args.get(name, '') %}
+            {% set col_lg = field.get('col-lg', 'col-lg-2') %}
+
+            {% if type == 'hidden' %}
+                <input type="hidden" id="{{ name }}" name="{{ name }}" value="{{ value }}">
+            {% else %}
+            <div class="{{ col_lg }}">
+                <div class="form-group">
+                    <label>{{ field.get('label', ' ') }}</label>
+                {% if type == 'input' %}
+                    {% if input_type == 'number'%}
+                    <input type="{{ input_type }}" class="form-control" id="{{ name }}" name="{{ name }}" value="{{ value }}" min=0 step=1>
+                    {% else %}
+                    <input type="{{ input_type }}" class="form-control" id="{{ name }}" name="{{ name }}" value="{{ value }}">
+                    {% endif %}
+                {% elif type == 'textarea' %}
+                    <textarea class="form-control" id="{{ name }}" name="{{ name }}" >{{ value }}</textarea>
+
+                {% elif type == 'select' %}
+                    {% set options = field.get('options', []) %}
+                    <select class="selectpicker form-control" name="{{ name }}" id="{{ name }}" size="1">
+                        {% for option in options %}
+                            {% set option_val = '%s' % option.get('value', '') %}
+                            {% set selected = 'selected' if value == option_val else '' %}
+                            <option value="{{ option_val }}" {{ selected }}>{{ option.get('name') }}</option>
+                        {% endfor %}
+                    </select>
+                {% elif type == 'dbselect' %}
+                    {% set options = field.get('options', []) %}
+                    <select class="selectpicker form-control" name="{{ name }}" id="{{ name }}" size="1">
+                        <option value="-1">请选择……</option>
+                        {% for option in options %}
+                            {% set option_val = '%s' % option.get('value', '') %}
+                            {% set selected = 'selected' if value == option_val else '' %}
+                            <option value="{{ option_val }}" {{ selected }}>{{ option.get('name') }}</option>
+                        {% endfor %}
+                    </select>
+                {% elif type == 'daterange' or  type == 'datetimepicker' %}
+                    {% set begin_name = 'begin_'+name %}
+                    {% set end_name = 'end_'+name %}
+                    <div class="input-{{type}} input-group">
+                        <input type="text" value="{{ args.get(begin_name, '') }}" name="{{ begin_name }}" class="form-control {{type}}" id="begin_{{ name }}">
+                        <span class="input-group-addon">至</span>
+                        <input type="text" value="{{ args.get(end_name, '') }}" name="{{ end_name }}" class="form-control {{type}}" id="end_{{ name }}">
+                    </div>
+                {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div class="row"><div class="col-lg-12"><div class="hr-line-dashed"></div></div></div>
+    <div class="row">
+        <div class="col-lg-1">
+            <div class="form-group">
+                <button id="submit1" name="submit1" type="submit" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endmacro %}
+
+
+{% macro input(label, name, value='', placeholder='', type='text', required='', help='', not_null="", disabled='') %}
+{% set errmsg = g['errmsg'] %}
+{% set errmsg_text = errmsg.get(name, '') if errmsg else '' %}
+{% set error_class = 'has-error' if errmsg_text else '' %}
+<div class="form-group">
+    {% if not_null == 'yes' %}
+    <label class="col-lg-4 control-label" id="label-{{ name }}"><span style="color: red;">*</span> {{ label }}</label>
+    {% else %}
+    <label class="col-lg-4 control-label" id="label-{{ name }}">{{ label }}</label>
+    {% endif %}
+    <div class="col-lg-8 {{error_class}}" id="control-{{ name }}">
+        {% if disabled == 'yes' %}
+            <input class="form-control " id="{{ name }}" name="{{ name }}" value="{{ value|string }}"
+            placeholder="{{ placeholder }}" type="{{ type }}" {{ required }} onfocus=this.blur() readonly="true">
+        {% else %}
+            <input class="form-control " id="{{ name }}" name="{{ name }}" value="{{ value|string }}"
+            placeholder="{{ placeholder }}" type="{{ type }}" {{ required }}>
+        {% endif %}
+
+        {% if help %}<span class="help-block m-b-none">{{ help|safe }}</span>{% endif %}
+        {% if errmsg_text %}<span class="help-block m-b-none">{{ errmsg_text }}</span>{% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro select(label, name, value='', option_list=[], size='1', required='', help='', disabled='') %}
+{% set errmsg = g['errmsg'] %}
+{% set errmsg_text = errmsg.get(name, '') if errmsg else '' %}
+{% set error_class = 'has-error' if errmsg_text else '' %}
+<div class="form-group">
+    <label class="col-lg-4 control-label">{{ label }}</label>
+    <div class="col-lg-8 {{error_class}}">
+        <select class="form-control" id="{{ name }}" name="{{ name }}" size="{{ size }}" {{ required }} {{ disabled }}>
+        {% for option in option_list %}
+            {% if option[1]|string == value|string %}
+                <option value="{{ option[1] }}" selected="selected">{{ option[0] }}</option>
+            {% else %}
+                <option value="{{ option[1] }}">{{ option[0] }}</option>
+            {% endif %}
+        {% endfor %}
+        </select>
+        {% if help %}<span class="help-block m-b-none">{{ help }}</span>{% endif %}
+        {% if errmsg_text %}<span class="help-block m-b-none">{{ errmsg_text }}</span>{% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro dbselect(label, name, value='', option_list=[], att_name='', attr_value='', size='1', required='', help='', disabled='') %}
+{% set errmsg = g['errmsg'] %}
+{% set errmsg_text = errmsg.get(name, '') if errmsg else '' %}
+{% set error_class = 'has-error' if errmsg_text else '' %}
+<div class="form-group">
+    <label class="col-lg-4 control-label">{{ label }}</label>
+    <div class="col-lg-8 {{error_class}}">
+        <select class="form-control" id="{{ name }}" name="{{ name }}" size="{{ size }}" {{ required }} {{ disabled }}>
+            <option value="">请选择……</option>
+        {% for option in option_list %}
+            {% set val = option|getattr(attr_value) %}
+            {% set selected = 'selected="selected"' if val|string == value|string else '' %}
+            <option value="{{ val }}" {{selected}}>{{ option|getattr(att_name) }}</option>
+        {% endfor %}
+        </select>
+        {% if help %}<span class="help-block m-b-none">{{ help }}</span>{% endif %}
+        {% if errmsg_text %}<span class="help-block m-b-none">{{ errmsg_text }}</span>{% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro textarea(label, name, value='', required='', help='', disabled='',height='100px') %}
+{% set errmsg = g['errmsg'] %}
+{% set errmsg_text = errmsg.get(name, '') if errmsg else '' %}
+{% set error_class = 'has-error' if errmsg_text else '' %}
+<div class="form-group">
+    <label class="col-lg-4 control-label">{{ label }}</label>
+    <div class="col-lg-8 {{error_class}}">
+        {% if disabled == 'yes'%}
+        <textarea id="{{ name }}" class="form-control" name="{{ name }}" {{ required }} style="min-height:{{ height }};max-width: 100%;" onfocus=this.blur()>{{ value }}</textarea>
+        {% else %}
+        <textarea id="{{ name }}" class="form-control" name="{{ name }}" {{ required }} style="min-height:{{ height }};max-width: 100%;">{{ value }}</textarea>
+        {% endif %}
+        {% if help %}<span class="help-block m-b-none">{{ help }}</span>{% endif %}
+        {% if errmsg_text %}<span class="help-block m-b-none">{{ errmsg_text }}</span>{% endif %}
+    </div>
+</div>
+<script type="text/javascript">
+var s =  document.querySelectorAll("textarea");
+for(var i =0; i<s.length;i++){
+   s[i].style.height =  s[i].scrollHeight + 10+ 'px';
+}
+</script>
+{% endmacro %}
+
+
+{% macro form_label(label, value) %}
+<div class="form-group">
+    <label class="col-lg-4 control-label">{{ label }}</label>
+    <div class="col-lg-8">
+        <label class="form-control" style="border: none;">{{ value }}</label>
+    </div>
+</div>
+{% endmacro %}
+
+{# 创建地区列表 省-市-区/县 #}
+{% macro build_region(label='地区', level=3, province='', city='', district='') %}
+<div class="form-group">
+    <input type="hidden" id="db_province" value="{{ province }}">
+    <input type="hidden" id="db_city" value="{{ city }}">
+    <input type="hidden" id="db_district" value="{{ district }}">
+    <label class="col-lg-4 control-label">{{ label }}</label>
+    <div class="col-lg-8">
+        {# 动态加载省、城市 #}
+        <select id="province" name="province">
+        </select>
+
+        {% if level >= 2 %}
+        <select id="city" name="city" style="display:none;">
+        </select>
+        {% endif %}
+
+        {% if level >= 3 %}
+        <select id="district" name="district" style="display:none;">
+        </select>
+        {% endif %}
+    </div>
+</div>
+<script type="text/javascript">
+$(document).ready(function() {
+    var province = $('#db_province').val();
+    var city     = $('#db_city').val();
+    var district = $('#db_district').val();
+    if (province && city && district || province && city){
+        $.get('/sys/region_name/show', {'province':province,'region_type':1}, function(res){
+            $('#province').append(res);
+            $('#province').change();
+            $('#city').show();
+            $('#district').show();
+        });
+        $.get('/sys/region_name/show', {'city':city,'region_type':2}, function(res){
+            $('#city').append(res);
+        });
+        $.get('/sys/region_name/show', {'district':district,'region_type':3}, function(res){
+            $('#district').append(res);
+        });
+    }else{
+        $('#city option').remove();
+        $('#district option').remove();
+        $('#city').hide();
+        $('#district').hide();
+        $.get('/sys/region/options', {'region_name':'中国',
+                'db_value':province,'city':city,'province':province, 'region_type':0}, function(options_html){
+            $('#province').append(options_html);
+            $('#city').append(options_html);
+            $('#district').append(options_html);
+            $('#province').change();
+        });
+    }
+});
+
+{% if level >= 2 %}
+// 省份变化
+$('#province').change(function(){
+    var province    = $('#province').val();
+    var db_city = $('#db_city').val();
+    $('#city option').remove();
+    $('#district option').remove();
+    $('#city').hide();
+    $('#district').hide();
+
+    if (!province) {
+        return;
+    }
+
+    $.get('/sys/region/options', {'region_name':province,
+            'db_value':db_city, 'region_type':1}, function(options_html){
+        $('#city').append(options_html);
+        $('#city').show();
+        $('#city').change();
+    });
+});
+{% endif %}
+
+{% if level >= 3 %}
+// 城市变化
+$('#city').change(function(){
+    var city    = $('#city').val();
+    var db_district = $('#db_district').val();
+    $('#district option').remove();
+    $('#district').hide();
+
+    if (!city) {
+        return;
+    }
+
+    $.get('/sys/region/options', {'region_name':city,
+            'db_value':db_district, 'region_type':2}, function(options_html){
+        $('#district').append(options_html);
+        $('#district').show();
+    });
+});
+{% endif %}
+
+
+</script>
+{% endmacro %}
+
+
+{% macro submit(btn='提交', id="submit") -%}
+{% set errmsg = g['errmsg'] %}
+{% set errmsg_text = errmsg.get('submit', '') if errmsg else '' %}
+<div class="form-group">
+    <div class="col-lg-4"></div>
+    <div class="col-lg-8">
+        {% if errmsg_text %}
+        <div class="alert alert-warning">{{ errmsg_text|safe }}</div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary" id="{{ id }}">{{ btn }}</button>
+    </div>
+</div>
+{%- endmacro %}
+
+
+{% macro timeago(current_time, before_time) %}
+{% set diff_time = current_time - before_time %}
+{% set diff_month = diff_time/(30*24*60*60)|int %}
+{% set diff_days = diff_time/(24*60*60)|int %}
+{{ diff_days }}天
+{% endmacro %}
+
+
+{% macro datetimepicker(label, name, value='', placeholder='', type='', required='', help='', disabled='',format='%Y-%m-%d %H:%M') %}
+{% set nvalue = value|toint %}
+{% set str_date_time = '' if nvalue == 0 else nvalue|format_timestamp(format) %}
+<div class="form-group">
+    <label class="col-lg-4 control-label">{{ label }}</label>
+    <div class="col-lg-8">
+        <div class="input-group">
+            <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
+            {%if disabled == 'yes'%}
+            <input type="text" class="form-control datetimepicker" value="{{ str_date_time }}" id="{{ name }}" name="{{ name }}" placeholder="{{ placeholder }}" {{ required }} disabled="disabled" readonly="true">
+            {% else %}
+            <input type="text" class="form-control datetimepicker" value="{{ str_date_time }}" id="{{ name }}" name="{{ name }}" placeholder="{{ placeholder }}" {{ required }}>
+            {% endif %}
+            {% if help %}<span class="help-block m-b-none">{{ help }}</span>{% endif %}
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro input_static(label, name, value='', placeholder='', type='text', margin_right='1000px') %}
+<div class="form-group">
+    {% if not_null == 'yes' %}
+    <label class="col-lg-4 control-label" id="label-{{ name }}"><span style="color: red;">*</span> {{ label }}</label>
+    {% else %}
+    <label class="col-lg-4 control-label" id="label-{{ name }}">{{ label }}</label>
+    {% endif %}
+    <div class="col-lg-8 {{error_class}}" id="control-{{ name }}">
+        {% if type== 'file'%}
+        <div class="lightBoxGallery">
+            <a href="{{ value|string }}" title="头 像" data-gallery=""><img src="{{ value|string }}" style="max-width: 280px;margin-top: 1%;margin-right: {{ margin_right }};margin-left: 0px;">
+            </a>
+        </div>
+        {% else %}
+        <p class="form-control-static">{{ value|string }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+{# 搜索表单 #}
+{% macro build_temp_search_form(form_config, action="", method="GET") %}
+<form class="form" action="{{ action }}" method="{{ method }}" id="temp_search_form">
+    <div class="row">
+        {% set args = request.args %}
+        {% for field in form_config %}
+            {% set type = field.get('type', 'input') %}
+            {% set name = field.get('name', '') %}
+            {% set value = args.get(name, '') %}
+            {% set col_lg = field.get('col-lg', 'col-lg-3') %}
+
+            {% if type == 'hidden' %}
+                <input type="hidden" id="{{ name }}" name="{{ name }}" value="{{ value }}">
+            {% else %}
+            <div class="{{ col_lg }}" style="margin-right: 3%;">
+                <div class="form-group">
+                    <label>{{ field.get('label', ' ') }}</label>
+                {% if type == 'input' %}
+                    <input type="text" class="form-control" id="{{ name }}" name="{{ name }}" value="{{ value }}" >
+
+                {% elif type == 'textarea' %}
+                    <textarea class="form-control" id="{{ name }}" name="{{ name }}" >{{ value }}</textarea>
+
+                {% elif type == 'select' %}
+                    {% set options = field.get('options', []) %}
+                    <select class="selectpicker form-control" name="{{ name }}" id="{{ name }}" size="1">
+                        {% for option in options %}
+                            {% set option_val = '%s' % option.get('value', '') %}
+                            {% set selected = 'selected' if value == option_val else '' %}
+                            <option value="{{ option_val }}" {{ selected }}>{{ option.get('name') }}</option>
+                        {% endfor %}
+                    </select>
+                {% elif type == 'daterange' or  type == 'datetimepicker' %}
+                    {% set begin_name = 'begin_'+name %}
+                    {% set end_name = 'end_'+name %}
+                    <div class="input-{{type}} input-group">
+                        <input type="text" value="{{ args.get(begin_name, '') }}" name="{{ begin_name }}" class="form-control {{type}}">
+                        <span class="input-group-addon">至</span>
+                        <input type="text" value="{{ args.get(end_name, '') }}" name="{{ end_name }}" class="form-control {{type}}">
+                    </div>
+                {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div class="row"><div class="col-lg-12"><div class="hr-line-dashed"></div></div></div>
+    <div class="row">
+        <div class="col-lg-1 col-lg-offset-10">
+            <div class="form-group">
+                <button id="submit1" name="submit1" type="submit" class="btn btn-primary">提交</button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endmacro %}
+
+
+{% macro video(label, file_name='', value='', placeholder='', required='', help='', not_null='') %}
+{% set errmsg = g['errmsg'] %}
+{% set errmsg_text = errmsg.get(file_name, '') if errmsg else '' %}
+{% set error_class = 'has-error' if errmsg_text else '' %}
+<div class="form-group">
+    {% if not_null == 'yes' %}
+    <label class="col-lg-4 control-label" id="label-{{ file_name }}"><span style="color: red;">*</span> {{ label }}</label>
+    {% else %}
+    <label class="col-lg-4 control-label" id="label-{{ file_name }}">{{ label }}</label>
+    {% endif %}
+    <div class="col-lg-8 {{error_class}}" id="control-{{ file_name }}">
+        <input class="form-control " id="file_{{ file_name }}"
+            name="file_{{ file_name }}" value="{{ value|string }}"
+            placeholder="{{ placeholder }}" type="file" {{ required }} multiple="multiple">
+        <input type="hidden" name="{{ file_name }}" id="{{ file_name }}" value="{{ value|string }}">
+        {% if help %}<span class="help-block m-b-none">{{ help|safe }}</span>{% endif %}
+        <video  src="{{ value|string}}" controls="controls" id="video_{{ file_name }}" style="display: none;">
+            <source src="{{ value|string}}" type="video/mp4">
+        </video>
+        {% if errmsg_text %}<span class="help-block m-b-none">{{ errmsg_text }}</span>{% endif %}
+    </div>
+</div>
+<script type="text/javascript">
+$(document).ready(function(){
+    var video_url = $("input[id={{ file_name }}]").val();
+    if (video_url != ''){
+        $("#video_{{ file_name }}").show();
+    }
+});
+$(function () {
+    $("#file_{{ file_name }}").change(function () {
+        var objUrl = getVideoURL(this.files[0]);
+        $("#video_{{ file_name }}").attr("src", objUrl);
+        $("#video_{{ file_name }}").show();
+        getTime();
+    });
+});
+<!--获取mp3文件的时间 兼容浏览器-->
+function getTime() {
+    setTimeout(function () {
+        var duration = $("#video_{{ file_name }}")[0].duration;
+        if(isNaN(duration)){
+            getTime();
+        }
+        else{
+            console.info("该视频的总时间为："+$("#video_{{ file_name }}")[0].duration+"秒")
+        }
+    }, 10);
+}
+<!--把文件转换成可读URL-->
+function getVideoURL(file) {
+    var url = null;
+    if (window.createObjectURL != undefined) { // basic
+        url = window.createObjectURL(file);
+    } else if (window.URL != undefined) { // mozilla(firefox)
+        url = window.URL.createObjectURL(file);
+    } else if (window.webkitURL != undefined) { // webkit or chrome
+        url = window.webkitURL.createObjectURL(file);
+    }
+    var video_url = '';
+    var data = new FormData();
+    data.append("file", file);
+    data.append("file_type", 2);
+    $.ajax({
+        url: "/sys/file/upload",
+        data: data,
+        cache: false,
+        contentType: false,
+        processData: false,
+        async: false,
+        type: 'POST',
+        success: function(url){
+            if (url != 'error') {
+                video_url = url;
+            } else {
+                alert('哦！糟糕，上传图片失败，请重传！');
+            }
+        }
+    });
+    if (video_url != '') {
+        $('#{{file_name}}').val(video_url);
+    }
+    return url;
+}
+</script>
+{% endmacro %}

@@ -1,0 +1,127 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+
+<li><a href="{{ url_for('img.index')}}">图片列表</a></li>
+{% endblock %}
+
+{% block body %}
+<span><font size="4px"><strong>第一步&nbsp;:</strong></font></span><br>
+<span><font size="4px"><strong>&nbsp;&nbsp;&nbsp;提示&nbsp;:&nbsp;&nbsp;&nbsp;</strong>选择图片分类，然后填写图片标题(如果不填写标题，就取文件名作为图片标题)。</font></span>
+<form class="form-horizontal" enctype="multipart/form-data" style="background:white;padding-top: 1%;padding-bottom: 0.3%;">
+    <div class="row">
+        <div class="col-lg-3">
+            {{ libs.dbselect('图片分类', 'ic_id', '', ic_list, 'ic_name', 'ic_id',required='required') }}
+        </div>
+        <div class="col-lg-8" style="display: none;">
+            {{ libs.input('标题', 'img_title', '',help='') }}
+        </div>
+    </div>
+</form>
+<div class="wrapper wrapper-content animated fadeIn">
+    <div class="row">
+        <span><font size="4px"><strong>第二步&nbsp;:</strong></font></span>
+        <div class="ibox-content">
+            <span>
+                <font size="4px">
+                    <strong>提示&nbsp;:&nbsp;</strong>
+                    点击下面空白处或把图片文件拉到下面空白处上传(上传一次不能超过100张)。
+                </font>
+                <font size="4px" color="red">图片格式为&nbsp;:&nbsp;图片标题.文件格式。</font>
+            </span>
+            <form id="my-awesome-dropzone" class="dropzone"  method="POST" action="{{ url_for('img.upload')}}" style="background:white">
+                <input type="hidden" name="hidden_ic_id" value="" id="hidden_ic_id">
+                <input type="hidden" name="hidden_img_title" value="" id="hidden_img_title">
+                <div class="dropzone-previews"></div>
+                <div class="pull-right">{{ libs.submit() }}</div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<link href="/static/css/plugins/dropzone/basic.css" rel="stylesheet">
+<link href="/static/css/plugins/dropzone/dropzone.css" rel="stylesheet">
+<!-- Mainly scripts -->
+<script src="/static/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="/static/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+
+<!-- Custom and plugin javascript -->
+<script src="/static/js/inspinia.js"></script>
+<script src="/static/js/plugins/pace/pace.min.js"></script>
+
+<!-- DROPZONE -->
+<script src="/static/js/plugins/dropzone/dropzone.js"></script>
+<script>
+$('label.col-lg-4.control-label').attr('class','col-lg-3 control-label');
+$('select#ic_id').parent('div').attr('class', 'col-lg-9');
+$('#label-img_title').prop('class', 'col-lg-1 control-label');
+$('#control-img_title').prop('class', 'col-lg-5')
+$(":submit").click(function(){
+    var ic_id = $('#ic_id').val();
+    if (ic_id <= 0){
+        window.wxc.xcConfirm('请选择图片分类', window.wxc.xcConfirm.typeEnum.info);
+        return false;
+    }
+});
+$('button#submit').hide();
+$("#ic_id").change(function(){
+    var ic_id = $(this).val();
+    $('#hidden_ic_id').val(ic_id);
+    if (ic_id > 0){
+        $('button#submit').show();
+        window.wxc.xcConfirm('需要填写图片标题吗？', window.wxc.xcConfirm.typeEnum.confirm);
+        $('a.sgBtn.ok').html('需要');
+        $('a.sgBtn.cancel').html('不需要');
+        $('a.sgBtn.ok').click(function(){
+            $('#img_title').parents('.col-lg-8').show();
+        })
+    }else{
+        $('button#submit').hide();
+        $('#img_title').parents('.col-lg-8').hide();
+    }
+});
+$(document).ready(function(){
+    $("#img_title").on("input propertychange",function(){
+        var img_title = $(this).val();
+        if (img_title != ''){
+            $('#hidden_img_title').val(img_title);
+        }
+    });
+    Dropzone.options.myAwesomeDropzone = {
+        paramName : 'image',
+        dictDefaultMessage: "点击上传",
+        dictFallbackMessage:"你的浏览器不支持拖曳文件上传",
+        autoProcessQueue: false,
+        dictFileTooBig:"文件太大",
+        dictInvalidFileType:"你不能上传这种类型的文件",
+        dictCancelUpload:"取消上传",
+        dictCancelUploadConfirmation:"你确定要取消上传吗？",
+        dictMaxFilesExceeded:"你上传的文件过多",
+        uploadMultiple: true,
+        parallelUploads: 100,
+        maxFiles: 100,
+
+        // Dropzone settings
+        init: function() {
+            var myDropzone = this;
+
+            this.element.querySelector("button[type=submit]").addEventListener("click", function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                myDropzone.processQueue();
+            });
+            this.on("sendingmultiple", function() {
+            });
+            this.on("successmultiple", function(files, response) {
+            });
+            this.on("errormultiple", function(files, response) {
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

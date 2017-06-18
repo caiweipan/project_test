@@ -1,0 +1,91 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'一元云购活动ID', 'name':'lottery_id',},
+        {'label':'期数', 'name':'section_number',},
+        {'label':'商品名称', 'name':'goods_id', 'type':'select',
+            'options':goods_list},
+        {'label':'活动名称', 'name':'lottery_name',},
+        {'label':'状态', 'name':'lottery_status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'进行中', 'value':'1'},
+                {'name':'待揭晓', 'value':'2'},
+                {'name':'已结束', 'value':'3'},
+                {'name':'默认', 'value':'0'},
+            ]},
+        {'label':'增加时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>一元云购活动ID</th>
+            <th>期数</th>
+            <th>商品名称</th>
+            <th>活动名称</th>
+            <th>封面原图</th>
+            <th>销售价格</th>
+            <th>状态</th>
+            <th>参与进度</th>
+            <th>揭晓时间</th>
+            <th>增加时间</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for lottery in lottery_list %}
+        <tr>
+            <td>{{ lottery.lottery_id }}</td>
+            <td>{{ lottery.section_number }}</td>
+            <td><a href="{{ url_for('goods.goods_edit',goods_id=lottery.goods_id)}}">{{ lottery.goods_name }}</a></td>
+            <td>{{ lottery.lottery_name }}</td>
+            <td style="padding-bottom: 0px;padding-top: 0px;">
+                <div class="lightBoxGallery" style="text-align: left;">
+                    <a href="{{ lottery.lottery_img }}" title="封 面 原 图" data-gallery=""><img src="{{ lottery.lottery_img }}" style="max-width: 50px;">
+                    </a>
+                </div>
+            </td>
+            <td>{{ lottery.lottery_price }}</td>
+            <td>{{ const.LOTTERY_STATUS.get(lottery.lottery_status,'默认') }}</td>
+            <td>{{ lottery.schedule }}</td>
+            <td>{{ lottery.announced_time|format_timestamp }}</td>
+            <td>{{ lottery.add_time|format_timestamp }}</td>
+            <td><a href="{{ url_for('lottery.lottery_detail', lottery_id=lottery.lottery_id)}}">详情</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+function delete_lottery(uis_id,uid, adom) {
+    var txt = '确定要移除该用户吗？'
+    window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/lottery/delete', {'uis_id':uis_id, 'uid':uid}, function(res){
+            if (res != 'ok'){
+                var txt= res;
+                window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            var txt='删除成功！';
+            window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.success);
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+</script>
+{% endblock %}

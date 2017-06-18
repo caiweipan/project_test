@@ -1,0 +1,51 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="/comment/goods">商品列表</a></li>
+{% endblock %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'goods_id', 'name':'goods_id'},
+        {'label':'商品名称', 'name':'goods_name'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+
+{% block data_body %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>商品id</th>
+                <th>图片</th>
+                <th>名称</th>
+                <th>商品价格</th>
+                <th>增加评价</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for goods in goods_list %}
+            <tr>
+                <td>{{ goods.goods_id }}</td>
+                <td style="padding-bottom: 0px;padding-top: 0px;">
+                    <div class="lightBoxGallery" style="text-align: left;">
+                        <a href="{{ goods.goods_img }}" title="商 品 图 片" data-gallery=""><img src="{{ goods.goods_img }}" style="max-width: 50px;">
+                        </a>
+                    </div>
+                </td>
+                <td><a href="{{ url_for('comment.goods_detail', goods_id=goods.goods_id) }}">{{ goods.goods_name }}</a></td>
+                <td>{{ goods.goods_price }}</td>
+                <td><a href="{{ url_for('comment.goods_add', goods_id=goods.goods_id)}}">增加评价</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{{ libs.pagination_html(pagination) }}
+{% endblock %}

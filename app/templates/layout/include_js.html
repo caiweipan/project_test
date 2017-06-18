@@ -1,0 +1,42 @@
+<!-- Mainly scripts -->
+<script src="/static/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="/static/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+<!-- Custom and plugin javascript -->
+<script src="/static/js/inspinia.js"></script>
+<script src="/static/js/plugins/pace/pace.min.js"></script>
+<script src="/static/js/plugins/iCheck/icheck.min.js"></script>
+<script type="text/javascript" src="/static/bootstrap-select/js/bootstrap-select.min.js"></script>
+
+<!-- datepicker -->
+<script type="text/javascript" src="/static/js/plugins/datapicker/bootstrap-datepicker.js"></script>
+
+<!-- datetimepicker  -->
+<script type="text/javascript" src="/static/js/plugins/datapicker/moment.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/datapicker/bootstrap-datetimepicker.min.js"></script>
+<script type="text/javascript" src="/static/js/plugins/datapicker/bootstrap-timepicker.min.js"></script>
+
+<script type="text/javascript">
+$('span.help-block.m-b-none').css("color","red");
+    $(document).ready(function () {
+        // checkbox框
+        $('.i-checks').iCheck({
+            checkboxClass: 'icheckbox_square-green',
+            radioClass: 'iradio_square-green',
+        });
+
+        // 日期控件
+        $('.input-daterange').datepicker({
+            keyboardNavigation: false,
+            forceParse: false,
+            autoclose: true,
+            format: 'yyyy-mm-dd',
+        });
+
+        // 日期时间控件
+        $('input.datetimepicker').datetimepicker({
+            format:'YYYY-MM-DD HH:mm',
+        });
+
+    });
+
+</script>

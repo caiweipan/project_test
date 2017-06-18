@@ -1,0 +1,109 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'order_id', 'name':'order_id'},
+        {'label':'用户昵称', 'name':'nickname', },
+        {'label':'订单类型', 'name':'order_type', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'普通订单', 'value':'1'},
+                {'name':'充值订单', 'value':'2'},
+                {'name':'抽奖订单', 'value':'3'},
+                {'name':'默认', 'value':'0'},
+            ]},
+        {'label':'订单状态', 'name':'order_status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'创建订单', 'value':'1'},
+                {'name':'已完成', 'value':'2'},
+                {'name':'已取消', 'value':'3'},
+                {'name':'默认', 'value':'0'}
+            ]},
+        {'label':'订单说明', 'name':'order_desc',},
+        {'label':'快递单号', 'name':'shipping_sn', },
+        {'label':'发货状态', 'name':'shipping_status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'未发货', 'value':'1'},
+                {'name':'已发货', 'value':'2'},
+                {'name':'默认', 'value':'0'}
+            ]},
+        {'label':'收货状态', 'name':'deliver_status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'待收货', 'value':'1'},
+                {'name':'已收货', 'value':'2'},
+                {'name':'默认', 'value':'0'}
+            ]},
+        {'label':'是否已经评价', 'name':'is_comment', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'是', 'value':'1'},
+                {'name':'否', 'value':'0'},
+            ]},
+        {'label':'支付类型', 'name':'pay_type', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'线上支付', 'value':'1'},
+                {'name':'货到付款', 'value':'2'},
+                {'name':'默认', 'value':'0'},
+            ]},
+        {'label':'下单时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+        {'label':'支付时间', 'name':'paid_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+
+{% block data_body %}
+{% set ORDER_TYPE = { 0:'默认',1:'普通订单',2:'充值订单',3:'抽奖订单'}%}
+{% set ORDER_STATUS = { 0:'默认',1:'创建订单',2:'已完成',3:'已取消'}%}
+{% set SHIPPING_STATUS = { 0:'默认',1:'未发货',2:'已发货',}%}
+{% set DILIVERY_STATUS = { 0:'默认',1:'待收货',2:'已收货',}%}
+{% set IS_COMMENT = { 0:'否',1:'是',}%}
+{% set PAY_TYPE = { 0:'默认',1:'线上支付',2:'货到付款',}%}
+
+<div class="table-responsive">
+<table class="table">
+    <thead>
+        <tr>
+            <th>订单ID</th>
+            <th>用户昵称</th>
+            <th>订单类型</th>
+            <th>订单状态</th>
+            <th>快递单号</th>
+            <th>发货状态</th>
+            <th>收货状态</th>
+            <th>增加评价</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for order in order_list %}
+        <tr>
+            <td><a href="{{ url_for('order.detail', order_id=order.order_id) }}">{{ order.order_id }}</a></td>
+            <td>{{ order.nickname }}</td>
+            <td>{{ ORDER_TYPE.get(order.order_type, '默认') }}</td>
+            <td>{{ ORDER_STATUS.get(order.order_status, '默认') }}</td>
+            <td>{{ order.shipping_sn }}</td>
+            <td>{{ SHIPPING_STATUS.get(order.shipping_status, '默认')}}</td>
+            <td>{{ DILIVERY_STATUS.get(order.deliver_status, '默认') }}</td>
+            <td><a href="{{ url_for('comment.order_add', order_id=order.order_id)}}">增加评价</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{{ libs.pagination_html(pagination) }}
+
+{% endblock %}
+{% block footer %}
+<script type="text/javascript">
+$(function () { $("[data-toggle='tooltip']").tooltip(); });
+</script>
+{% endblock %}

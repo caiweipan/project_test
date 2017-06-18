@@ -1,0 +1,70 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/order/') }}">充值订单列表</a></li>
+{% endblock %}
+
+{% block body %}
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">订单基本信息 <a id="order_tran_list" name="order_tran_list" type="button" class="btn btn-primary btn-xs" style="float:right;" href="{{ url_for('order.order_tran_list', order_id=order.order_id) }}">订单交易列表</a></div>
+            <div class="ibox-content">
+                <table class="table">
+                    <tr><th>订单id</th><td>{{ order.order_id }}</td></tr>
+                    <tr><th>下单时间</th><td>{{ order.add_time|format_timestamp }}</td></tr>
+                    <tr><th>订单状态</th><td><label class="label">{{ const.ORDER_STATUS.get(order.order_status) }}</label></td></tr>
+                    <tr><th>订单金额</th><td>￥{{ order.order_amount }}</td></tr>
+                    <tr><th>充值金额</th><td>￥{{ order.paid_amount }}</td></tr>
+                    <tr><th>支付状态</th>
+                        <td>
+                        {% set pay_label_class = 'label-danger' if order.pay_status == 2 else 'label-warning' %}
+                        <label class="label {{ pay_label_class }}">{{ const.PAY_STATUS.get(order.pay_status) }}</label>
+                        </td>
+                    </tr>
+                    <tr><th>支付方式</th><td>{{ order.pay_method }}</td></tr>
+                    <tr><th>支付类型</th><td>{{ const.PAY_TYPE.get(order.pay_type, '默认') }}</td></tr>
+                    <tr><th>支付流水号</th><td>{{ order.pay_tran_id }}</td></tr>
+                    <tr><th>付款时间</th><td>{{ order.paid_time|format_timestamp }}</td></tr>
+                    <tr><th>更新时间</th><td>{{ order.update_time|format_timestamp }}</td></tr>
+
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">用户信息</div>
+            <div class="ibox-content">
+                <table class="table">
+                    <tr><th>用户uid</th><td>{{ user.uid }}</td></tr>
+                    <tr><th>系统</th><td>{{ user_device }}</td></tr>
+                    <tr><th>联系人</th><td>{{ user.nickname }}</td></tr>
+                    <tr><th>联系人手机</th><td>{{ user.mobile }}</td></tr>
+                    <tr><th>用户备注</th><td>{{ order.user_remark }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block footer %}
+<script type="text/javascript">
+$(document).ready( function(){
+    $('a.order_desc').each(function(){
+        var $a = $(this);
+        var order_id = $a.attr('order_id');
+        $('#order_desc_'+order_id).darkTooltip({
+            size:'large',
+            trigger:'click',
+            animation:'flipIn',
+            gravity:'west',
+            modal: false,
+        });
+    })
+});
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/comment/goods') }}">商品列表</a></li>
+{% endblock %}
+
+{% block body %}
+<input type="hidden" name="goods_id" id="goods_id" value="{{ goods_id }}">
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-content">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>商品id</th>
+                                <th>头像</th>
+                                <th>妮称</th>
+                                <th>商品图片</th>
+                                <th>商品名称</th>
+                                <th>评价内容</th>
+                                <th>评价分数</th>
+                                <th>评价时间</th>
+                                <td>编辑</td>
+                                <td>删除</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for comment in goods_comment_list %}
+                            <tr>
+                                <td>{{ comment.tid }}</td>
+                                <td style="padding-bottom: 0px;padding-top: 0px;">
+                                    <div class="lightBoxGallery" style="text-align: left;">
+                                        <a href="{{ comment.avatar  }}" title="用 户 头 像" data-gallery=""><img src="{{ comment.avatar  }}" style="max-width: 50px;">
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>{{ comment.nickname }}</td>
+                                <td style="padding-bottom: 0px;padding-top: 0px;">
+                                    <div class="lightBoxGallery" style="text-align: left;">
+                                        <a href="{{ comment.timg  }}" title="用 户 头 像" data-gallery=""><img src="{{ comment.timg  }}" style="max-width: 50px;">
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>{{ comment.tname }}</td>
+                                <td><a title="{{ comment.content }}" data-container="body" data-toggle="tooltip" data-placement="top">{{ comment.content|striptags|truncate(18, Ture) }}</a></td>
+                                <td>{{ comment.star }}</td>
+                                <td>{{ comment.add_time|format_timestamp }}</td>
+                                <td><a href="{{ url_for('comment.goods_edit',comment_id=comment.comment_id, goods_id=comment.tid)}}">编辑</a></td>
+                                <td><a href="{{url_for('comment.goods_delete', comment_id=comment.comment_id)}}">删除</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block footer %}
+<script type="text/javascript">
+$(function () { $("[data-toggle='tooltip']").tooltip(); });
+</script>
+{% endblock %}

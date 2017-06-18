@@ -1,0 +1,6 @@
+<select class='selectpicker form-control' name='lottery_id' id='lottery_id' size='1'>
+    <option value="0">请选择活动期数……</option>
+    {% for section_number in section_number_list %}
+    <option value="{{ section_number.lottery_id }}">{{ section_number.section_number }}</option>
+    {% endfor %}
+</select>

@@ -1,0 +1,37 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+
+<li><a href="{{ url_for('sys.ad_list')}}">广告列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="POST" action="{{ url_for('sys.ad_save') }}" enctype="multipart/form-data">
+                <input type="hidden" name="adv_id" id="adv_id" value="{{ f.adv_id }}">
+                {{ libs.select('广告分类', 'ac_id', f.ac_id, [('请选择……',''),('首页', '1'),('商城banner','2'),('一元购banner','4')], required='required') }}
+                {{ libs.img('封面原图', 'adv_img', f.adv_img, help='一张照片') }}
+                {{ libs.select('第三方类型', 'ttype', f.ttype, [('请选择……','-1'),('商品', '1'),('一元购','2'),('资讯','3')], required='required') }}
+                {{ libs.input('第三方ID', 'tid', f.tid|default(0), type='number', required='required', help='如商品ID, 一元购ID, 资讯ID等') }}
+                {{ libs.select('是否显示', 'is_show', f.is_show, [('请选择……',''),('显示', '1'),('不显示','0')], required='required') }}
+                {{ libs.input('排序', 'sort_order', f.sort_order|default(0), type='number', required='required min=0 max=1000 step=1', help='值大的排在前面') }}
+                {{ libs.input('类别', 'adv_category', f.adv_category, required='', help='') }}
+                {{ libs.input('标题', 'adv_title', f.adv_title, required='', help='') }}
+                {{ libs.input('副标题', 'adv_title2', f.adv_title2, required='', help='') }}
+                {{ libs.textarea('简介', 'adv_desc', f.adv_desc) }}
+                {{ libs.submit() }}
+              </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

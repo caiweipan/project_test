@@ -1,0 +1,62 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+
+<li><a href="{{ url_for('sys.menu_list')}}">菜单列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="POST" action="{{ url_for('sys.menu_save') }}" enctype="multipart/form-data">
+                <input type="hidden" name="permission_id" id="permission_id" value="{{ f.permission_id }}">
+                {{ libs.select('菜单类型', 'menu_type', f.menu_type,
+                     [('请选择……','-1'),
+                     ('主菜单', '0'),
+                     ('子菜单','1')],
+                required='required') }}
+                {{ libs.input('端点名称', 'endpoint_name', f.endpoint_name, required='required', help="如: 用户管理") }}
+                <div id='icon' style="display: none;">
+                {{ libs.input('端点icon', 'endpoint_icon', f.endpoint_icon, help="如: fa fa-users") }}
+                </div>
+                {{ libs.input('端点', 'endpoint', f.endpoint, required='required', help="如: user.index") }}
+                <div id='endpoint_list' style="display: none;">
+                {{ libs.input('访问的端点列表', 'endpoint_list', f.endpoint_list, help="如: user.index,user.user_detail") }}
+                </div>
+                {{ libs.input('排序', 'sort_order', f.sort_order, type='number', required='required min=0 step=1', help="排序: 数值越大排序越靠前") }}
+                {{ libs.submit() }}
+              </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$(document).ready(function() {
+  var menu_type = $('#menu_type').val();
+  if (menu_type == 0){
+    $('#icon').show();
+  }
+  if (menu_type == 1){
+    $('#endpoint_list').show();
+  }
+  $('#menu_type').change(function(){
+    var menu_type = $('#menu_type').val();
+    if (menu_type == 0){
+      $('#icon').show();
+      $('#endpoint_list').hide();
+    }else{
+      $('#icon').hide();
+      $('#endpoint_list').show();
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'用户ID', 'name':'uid',},
+        {'label':'昵称', 'name':'nickname',}
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>用户ID</th>
+            <th>头像</th>
+            <th>昵称</th>
+            <th>添加日期</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for troy in troy_list %}
+        <tr>
+            <td>{{ troy.uid }}</td>
+            <td style="padding-bottom: 0px;padding-top: 0px;">
+                <div class="lightBoxGallery" style="text-align: left;">
+                    <a href="{{ troy.avatar }}" title="头像" data-gallery=""><img src="{{ troy.avatar }}" style="max-width: 50px;">
+                    </a>
+                </div>
+            </td>
+            <td><a href="{{ url_for('user.troy_edit', uid=troy.uid) }}">{{ troy.nickname }}</a></td>
+            <td>{{ troy.add_time|format_timestamp }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$("a.add_new").click(function(){
+    window.location.href = '/user/troy/add';
+});
+</script>
+{% endblock %}

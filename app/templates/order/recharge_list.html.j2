@@ -1,0 +1,62 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'订单id', 'name':'order_id'},
+        {'label':'交易ID', 'name':'tran_id'},
+        {'label':'下单时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-3'},
+        {'label':'支付时间', 'name':'paid_time', 'type':'daterange', 'col-lg':'col-lg-3'},
+        {'label':'订单状态', 'name':'order_status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'创建订单', 'value':'1'},
+                {'name':'已完成', 'value':'2'},
+                {'name':'已取消', 'value':'3'},
+                {'name':'默认', 'value':'0'}
+            ]},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+
+{% block data_body %}
+{% set ORDER_STATUS = { 0:'默认',1:'创建订单',2:'已完成',3:'已取消'}%}
+<div class="table-responsive">
+<table class="table">
+    <thead>
+        <tr>
+            <th>订单ID</th>
+            <th>充值金额</th>
+            <th>订单状态</th>
+            <th>下单时间</th>
+            <th>支付时间</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for order in order_list %}
+        <tr>
+            <td><a href="{{ url_for('order.detail', order_id=order.order_id) }}">{{ order.order_id }}</a></td>
+            <td>{{ order.paid_amount }} 元</td>
+            <td>{{ ORDER_STATUS.get(order.order_status, '默认') }}</td>
+            <td>{{ order.add_time|format_timestamp }}</td>
+            <td>{{ order.paid_time|format_timestamp }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{{ libs.pagination_html(pagination) }}
+
+{% endblock %}
+{% block footer %}
+<script type="text/javascript">
+$(document).ready(function(){
+    $(function () { $("[data-toggle='tooltip']").tooltip(); });
+});
+</script>
+{% endblock %}

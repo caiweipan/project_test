@@ -1,0 +1,179 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ url_for('lottery.index')}}">一元云购活动列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+                <form class="form-horizontal wizard" method="POST" action="{{ url_for('lottery.save') }}" enctype="multipart/form-data">
+                    <input id="lottery_id" type="hidden" name="lottery_id" value="{{ f.lottery_id }}">
+                    {% set required='' if f else 'required'%}
+                    {{ libs.dbselect('商品名称', 'goods_id', f.goods_id, goods_list, 'goods_name', 'goods_id',required='required') }}
+                    {% if f %}
+                    {% else %}
+                    {{ libs.input('活动名称', 'lottery_name', f.lottery_name, required='required') }}
+                    {% endif %}
+                    {{ libs.img('封面原图', 'lottery_img',f.lottery_img, type="file", help='一张图片', required=required) }}
+                    {{ libs.input('参加一次一元购费用', 'lottery_price', f.lottery_price, type='number', required='required'+' min=0.00 step=0.01') }}
+                    {% if f and f.finish_quantity >=1 %}
+                    {% set disabled = "yes" if f and f.join_quantity > 0 else ""%}
+                    {{ libs.input('每人最多参与次数', 'max_quantity', f.max_quantity|default(1), type='number', required='required min=1 step=1', disabled=disabled) }}
+                    {{ libs.input('达到开奖人次数量', 'finish_quantity', f.finish_quantity, type='number', required='required min=1 step=1', disabled=disabled) }}
+                    {% else %}
+                    {{ libs.input('每人最多参与次数', 'max_quantity', 1, type='number', required='required min=1 step=1') }}
+                    {{ libs.input('达到开奖人次数量', 'finish_quantity', f.finish_quantity, type='number', required='required min=1 step=1') }}
+                    {% endif %}
+                    {% if f %}
+                    {{ libs.input('期数', 'section_number', f.section_number, type='number', required='required'+' min=0 step=1') }}
+                    {{ libs.input_static('简介', 'lottery_desc', f.lottery_desc) }}
+                    {{ libs.input_static('参与人次数量', 'join_quantity', f.join_quantity) }}
+                    {{ libs.input_static('剩余人次数量 ', 'remain_quantity', f.remain_quantity, type='number') }}
+                    {{ libs.input_static('参与进度', 'schedule', f.schedule, type='number') }}
+                    {{ libs.input_static('揭晓时间', 'announced_time', f.announced_time|format_timestamp, type='number')}}
+                    {{ libs.input_static('中奖用户参与人次', 'prize_goods_num', f.prize_goods_num) }}
+                    {{ libs.input_static('中奖时间', 'prize_time', f.prize_time|format_timestamp) }}
+                    {% set prize_number = prize_number if f > 0 else ''%}
+                    {{ libs.input_static('中奖号码', 'prize_number', prize_number) }}
+                    {{ libs.input_static('中奖用户昵称', 'prize_nickname', f.prize_nickname) }}
+                    {{ libs.input_static('中奖用户头像', 'prize_avatar', f.prize_avatar, type='file')}}
+                    {{ libs.input_static('添加时间', 'add_time', f.add_time|format_timestamp) }}
+                    {% else %}
+
+                    {% endif %}
+                    {{ libs.submit() }}
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">马甲用户参与一元购</div>
+            <div class="ibox-content">
+                <div class="input-group m-b">
+                    <input id="joinQuantity" type="text" class="form-control" placeholder="请输入参与总人次">
+                    <span class="input-group-btn">
+                        <button id="joinButton" type="button" class="btn btn-primary">参与</button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">一元云购号码列表</div>
+            <div class="ibox-content">
+            <form class="form-horizontal wizard" method="GET" action="" enctype="multipart/form-data">
+                <input id="lottery_id" type="hidden" name="lottery_id" value="{{ f.lottery_id }}">
+                <input type="hidden" name="redirect_url" value="{{ redirect_url }}" id="redirect_url">
+                {% set form_config = [
+                        {'label':'用户昵称', 'name':'nickname',},
+                        {'label':'活动名称', 'name':'lottery_name'},
+                        {'label':'订单ID', 'name':'order_id',},
+                        {'label':'抽奖号码', 'name':'lottery_number',},
+                        {'label':'是否中奖', 'name':'is_prize', 'type':'select',
+                            'options':[
+                                {'name':'请选择……', 'value':'-1'},
+                                {'name':'是', 'value':'1'},
+                                {'name':'否', 'value':'0'},
+                            ]},
+                        {'label':'增加时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+                ]%}
+
+                {{ libs.build_temp_search_form(form_config) }}
+            </form>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>主键ID</th>
+                        <th>用户昵称</th>
+                        <th>活动名称</th>
+                        <th>订单ID</th>
+                        <th>抽奖号码</th>
+                        <th>是否中奖</th>
+                        <th>增加时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for lottery_number in lottery_number_list %}
+                    <tr>
+                        <td>{{ lottery_number.ln_id }}</td>
+                        <td>{{ lottery_number.nickname }}</td>
+                        <td>{{ lottery_number.lottery_name }}</td>
+                        <td>{{ lottery_number.order_id }}</td>
+                        <td>{{ lottery_number.lottery_number }}</td>
+                        <td>{{ const.IS_PRIZE.get(lottery_number.is_prize, 0) }}</td>
+                        <td>{{ lottery_number.add_time|format_timestamp }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {{ libs.pagination_html(pagination) }}
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+var lottery_id = {{ f.lottery_id }};
+
+$(function($) {
+    $("#joinButton").click(function(){
+        var join_quantity = $("#joinQuantity").val();
+
+        var params = {
+            'lottery_id':lottery_id,
+            'join_quantity':join_quantity
+        };
+        $.ajax({
+            type: 'POST',
+            url: '/lottery/join',
+            data: params,
+            dataType: 'json',
+            timeout: 300,
+            async: true,
+            success: function(json) {
+                if (json.ret == 0) {
+                    var total = json.data.total;
+                    var errmsg = json.data.errmsg == '' ? '暂无' : json.data.errmsg;
+
+                    var msg = '成功参与' + total + '人次；异常原因：' + errmsg;
+                    alert(msg);
+                } else {
+                    var msg = json.msg;
+                    alert(msg);
+                }
+            },
+            error: function (xhr, type) {
+                alert('网络错误');
+            }
+        });
+    });
+});
+$(document).ready(function() {
+    $("#max_quantity").on("input propertychange",function(){
+        var max_quantity = $(this).val();
+        var finish_quantity = $('#finish_quantity').val();
+        if (max_quantity >= finish_quantity){
+            $('#max_quantity').prop('max', finish_quantity);
+        }else{
+            $('#max_quantity').prop('max', '');
+        }
+    });
+    $("#finish_quantity").on("input propertychange",function(){
+        var finish_quantity = $(this).val();
+        var max_quantity = $('#max_quantity').val();
+        if (max_quantity >= finish_quantity){
+            $('#max_quantity').prop('max', finish_quantity);
+        }else{
+            $('#max_quantity').prop('max', '');
+        }
+    });
+});
+</script>
+{% endblock %}

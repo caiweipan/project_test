@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{g.get('title', '')}} - 一膳</title>
+    <link rel="stylesheet" href="/static/css/darktooltip/reset.css">
+    <link rel="stylesheet" href="/static/css/darktooltip/examples.css">
+    <link rel="stylesheet" href="/static/css/darktooltip/darktooltip.css">
+    <link href="/static/css/sort.css" rel="stylesheet">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/font-awesome/css/font-awesome.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/static/css/plugins/iCheck/custom.css">
+
+    <link href="/static/css/animate.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/static/bootstrap-select/css/bootstrap-select.min.css">
+    <link href="/static/css/plugins/blueimp/css/blueimp-gallery.min.css" rel="stylesheet">
+    <!-- datapicker -->
+    <link rel="stylesheet" href="/static/css/plugins/datapicker/datepicker3.css">
+    <link rel="stylesheet" href="/static/css/plugins/date-time/bootstrap-datetimepicker.css">
+    <link rel="stylesheet" href="/static/css/plugins/date-time/bootstrap-timepicker.css">
+
+    <link rel="stylesheet" type="text/css" href="/static/css/xcConfirm.css"/>
+
+    <script src="/static/js/jquery-2.1.1.js"></script>
+    <script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-2.1.1.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/echarts.common.min.js"></script>
+
+    <script src="/static/js/xcConfirm.js" type="text/javascript" charset="utf-8"></script>
+    <style type="text/css">
+        .sgBtn{width: 135px; height: 35px; line-height: 55px; margin-left: 10px; margin-top: 10px; text-align: center; background-color: #0095D9; color: #FFFFFF; float: left; border-radius: 5px;}
+    </style>
+
+    <!-- gallery -->
+    <script src="/static/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+    <script src="/static/js/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+    <script src="/static/js/plugins/blueimp/jquery.blueimp-gallery.min.js"></script>
+
+    <script src="/static/js/jquery.darktooltip.js"></script>
+
+    <!-- clipboard -->
+    <script src="/static/js/clipboard.min.js"></script>
+    {% block head %}{% endblock %}
+</head>
+
+<div id="wrapper">
+
+    {# 导航 #}
+    {% include 'layout/nav.html' %}
+
+    <div id="page-wrapper" class="gray-bg">
+        {# 顶部导航 #}
+        {% include 'layout/topbar.html' %}
+
+        {# 面包屑导航 #}
+        <div class="row wrapper border-bottom white-bg page-heading">
+            <div class="col-lg-12">
+                <h2>{{ g.title }}</h2>
+                <ol class="breadcrumb">
+                    <li>
+                        <a href="/">首页</a>
+                    </li>
+                    {# 面包屑导航 #}
+                    {% block title_nav %}{% endblock %}
+                    <li class="active">
+                        <strong>{{ g.title }}</strong>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="wrapper wrapper-content animated fadeInRight">
+        {% set page_type = g.get('page_type') %}
+        {% if page_type == 'form' %}
+            {# 简单form 开始 #}
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="ibox float-e-margins">
+                        <div class="ibox-title"><h4>{{ g.get('title', '') }}</h4></div>
+                        <div class="ibox-content">
+                            {% block box_body %}{% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {# 简单form 结束 #}
+
+        {% elif page_type == 'search' %}
+            {# 搜索页面 开始 #}
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="ibox float-e-margins">
+                        <div class="ibox-title">筛选条件
+                            <div class="pull-right">
+                            {% block title_manager %}{% endblock %}
+                            </div>
+                        </div>
+                        <div class="ibox-content">
+                            {% block search_body %}{% endblock %}
+                        </div>
+                    </div>
+                    <div class="ibox float-e-margins">
+                        <div class="ibox-title">
+<!--                             {{ g.get('title', '') }}
+                            {% set is_export_excel = g.get('is_export_excel', False) %}
+                            {% if is_export_excel %}
+                                <button id="export_excel_button" name="export_excel_button" type="submit" class="btn btn-success btn-xs" style="float:right;">导出excel</button>
+                            {% endif %} -->
+                            {{ g.get('title', '') }}
+                            {% set add_new = g.get('add_new', False) %}
+                            {% if add_new %}
+                                <a id="add_new" name="add_new_button" type="button" class="btn btn-primary btn-xs add_new" style="float:right;" data-toggle="modal">{{ g.get('button_name') }}</a>
+                            {% endif %}
+                        </div>
+                        <div class="ibox-content">
+                            {% block data_body %}{% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {# 搜索页面 结束 #}
+
+        {% else %}
+            {# 复杂页面自己写html #}
+            {% block body %}{% endblock %}
+        {% endif %}
+        </div>
+
+        {# 页脚 #}
+        <div class="footer">
+            <div>
+                <div class="col-lg-6">
+                    <strong>Copyright</strong>
+                    木棉花云 &copy; 2016
+                </div>
+                <div class="col-lg-6">
+                    <div style="float: right;">
+                        <a href="http://kapokcloud.com/" target="_blank">
+                            <strong>深圳木棉花云网络科技有限公司</strong>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div id="blueimp-gallery" class="blueimp-gallery">
+        <div class="slides"></div>
+        <h3 class="title"></h3>
+        <a class="prev">‹</a>
+        <a class="next">›</a>
+        <a class="close">×</a>
+        <a class="play-pause"></a>
+        <ol class="indicator"></ol>
+    </div>
+</div>
+
+{# 加载公共js #}
+{% include 'layout/include_js.html' %}
+
+{# 页脚自定义js #}
+{% block footer %}{% endblock %}
+</body>
+</html>

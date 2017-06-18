@@ -1,0 +1,95 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'模板名称', 'name':'st_name'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>模板ID</th>
+            <th>模板名称</th>
+            <th>增加时间</th>
+            <th>移除</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for st in st_list %}
+        <tr>
+            <td>{{ st.st_id }}</td>
+            <td><a href="{{url_for('goods.st_detail',st_id=st.st_id)}}">{{ st.st_name }}</a></td>
+            <td>{{ st.add_time|format_timestamp }}</td>
+            <td><a href="javascript:;" onclick="javascript:delete_st({{ st.st_id }},this);">移除</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{{ libs.pagination_html(pagination) }}
+<!-- 新增banner弹出层 -->
+<div class="modal fade" id="add_template_modal" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="margin-top: 10%;">
+            <form class="form-horizontal" id="template_modal_form" autocomplete="off", enctype="multipart/form-data">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">关闭</span>
+                    </button>
+                    <h4 class="modal-title">新增模板</h4>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="st_id" id="st_id" value="">
+                    {{ libs.input('模板名称', 'st_name_modal', '', required='required') }}
+                </div>
+                <div class="modal-footer">
+                    <a type="button" class="btn btn-primary" id="submit">提交</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$("a.add_new").click(function(){
+    $('#add_template_modal').modal({backdrop:false});
+});
+$('a#submit').click(function(){
+    var st_id = $('#st_id').val();
+    var st_name = $('#st_name_modal').val();
+    $.get('/goods/st_save', {'st_id':st_id, 'st_name':st_name}, function(res){
+        if (res != 'ok'){
+            window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+            return false;
+        }else{
+            window.wxc.xcConfirm('新增成功！', window.wxc.xcConfirm.typeEnum.success);
+            var t=setTimeout("window.location.href=''",1000);
+        }
+    });
+});
+function delete_st(st_id, adom) {
+    window.wxc.xcConfirm('确定要移除该模板吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/goods/st_delete', {'st_id':st_id}, function(res){
+            if (res != 'ok'){
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            window.wxc.xcConfirm('移除成功！', window.wxc.xcConfirm.typeEnum.success);
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+</script>
+{% endblock %}

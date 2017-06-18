@@ -1,0 +1,220 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/user/') }}">用户列表</a></li>
+{% endblock %}
+
+{% block body %}
+<input type="hidden" name="uid" id="uid" value="{{ user.uid }}">
+<div class="row">
+    <ul id="myTab" class="nav nav-tabs" style="background-color: #ffffff;">
+        {% set CHECK_ACTIVE = 'class="active"' if check_type == '1' else ''%}
+        {% set ARIA = 'true' if check_type == '1' else 'false'%}
+        <li {{ CHECK_ACTIVE }}><a href="#user_content" data-toggle="tab" aria-expanded="{{ ARIA }}">基本信息</a></li>
+        {% set CHECK_ACTIVE = 'class="active"' if check_type == '2' else ''%}
+        {% set ARIA = 'true' if check_type == '2' else 'false'%}
+        <li {{ CHECK_ACTIVE }}><a href="#acount_content" data-toggle="tab" aria-expanded="{{ ARIA }}">帐户信息</a></li>
+        {% set CHECK_ACTIVE = 'class="active"' if check_type == '3' else ''%}
+        {% set ARIA = 'true' if check_type == '3' else 'false'%}
+        <li {{ CHECK_ACTIVE }}><a href="#acount_detail_content" data-toggle="tab" aria-expanded="{{ ARIA }}">流水帐信息</a></li>
+        {% set CHECK_ACTIVE = 'class="active"' if check_type == '4' else ''%}
+        {% set ARIA = 'true' if check_type == '4' else 'false'%}
+        <li {{ CHECK_ACTIVE }}><a href="#question_content" data-toggle="tab" aria-expanded="{{ ARIA }}">提问列表</a></li>
+    </ul>
+    <div id="myTabContent" class="tab-content">
+        {% set ACTIVE = 'active in' if check_type == '1' else ''%}
+        <div class="tab-pane fade {{ ACTIVE }}" id="user_content">
+            <div class="col-lg-6 col-md-6 col-xs-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">用户基本信息</div>
+                    <div class="ibox-content">
+                        <table class="table table-bordered">
+                            <tr><th>uid</th><td>{{ user.uid }}</td></tr>
+                            <tr><th>昵称</th><td>{{ user.nickname }}</td></tr>
+                            <tr><th>用户名</th><td>{{ user.username }}</td></tr>
+                            <tr><th>手机号码</th><td>{{ user.mobile }}</td></tr>
+                            <tr><th>头像</th>
+                                <td style="padding-bottom: 0px;padding-top: 0px;">
+                                    <div class="lightBoxGallery" style="text-align: left;">
+                                        <a href="{{ user.avatar }}" title="头  像" data-gallery=""><img src="{{ user.avatar }}" style="max-width: 50px;">
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr><th>妮称</th><td>{{ user.nickname }}</td></tr>
+                            <tr><th>性别</th><td>{{ const.GENDER.get(user.gender, 0) }}</td></tr>
+                            <tr><th>生日</th><td>{{ user.birthday }}</td></tr>
+                            <tr><th>手机号码状态</th><td>{{ const.MOBILE_STATUS.get(user.mobile_status, 0) }}</td></tr>
+                            <tr><th>pushtoken</th><td style="word-break:break-all;">{{ user.pushtoken }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% set ACTIVE = 'active in' if check_type == '2' else ''%}
+        <div class="tab-pane fade {{ ACTIVE }}" id="acount_content">
+            <div class="col-lg-6 col-md-6 col-xs-6">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">用户帐户信息</div>
+                    <div class="ibox-content">
+                        <table class="table table-bordered">
+                            <tr><th>余额</th><td>{{ ua.balance }}</td></tr>
+                            <tr><th>添加时间</th><td>{{ ua.add_time|format_timestamp }}</td></tr>
+                            <tr><th>更新时间</th><td>{{ ua.update_time|format_timestamp }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% set ACTIVE = 'active in' if check_type == '3' else ''%}
+        <div class="tab-pane fade {{ ACTIVE }}" id="acount_detail_content">
+            <div class="col-lg-12 col-md-12 col-xs-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">用户流水帐信息</div>
+                    <div class="ibox-content">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>上次余额</th>
+                                    <th>余额</th>
+                                    <th>金额</th>
+                                    <th>收支</th>
+                                    <th>操作</th>
+                                    <th>用户阅读的备注</th>
+                                    <th>系统阅读的备注</th>
+                                    <th>添加时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for detail in user_acount_detail_list %}
+                                <tr>
+                                    <td>{{ detail.prev_balance }}</td>
+                                    <td>{{ detail.balance }}</td>
+                                    <td>{{ detail.amount }}</td>
+                                    <td>{{ detail.in_or_out }}</td>
+                                    <td>{{ detail.action }}</td>
+                                    <td>
+                                        <a uad_id="{{ detail.uad_id }}" id="remark_for_user_{{ detail.uad_id }}" class="remark_for_user" data-tooltip="{{ detail.remark_for_user }}">{{ detail.remark_for_user|striptags|truncate(18, Ture) }}</a>
+                                    </td>
+                                    <td><a id="remark_for_sys_{{ detail.uad_id }}" uad_id="{{ detail.uad_id }}" class="remark_for_sys" data-tooltip="{{ detail.remark_for_sys }}">{{ detail.remark_for_sys|striptags|truncate(18, Ture) }}</a></td>
+                                    <td>{{ detail.add_time|format_timestamp('%Y-%m-%d %H:%M:%S') }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {{ libs.pagination_html(pagination) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% set ACTIVE = 'active in' if check_type == '4' else ''%}
+        <div class="tab-pane fade {{ ACTIVE }}" id="question_content">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">用户提问列表</div>
+                <div class="ibox-content">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>提问ID</th>
+                                <th>头像</th>
+                                <th>昵称</th>
+                                <th>标题</th>
+                                <th>内容</th>
+                                <th>增加时间</th>
+                                <th>详情</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for question in question_list %}
+                            <tr>
+                                <td>{{ question.question_id }}</td>
+                                <td style="padding-bottom: 0px;padding-top: 0px;">
+                                    <div class="lightBoxGallery" style="text-align: left;">
+                                        <a href="{{ question.avatar }}" title="头  像" data-gallery="">
+                                            <img src="{{ question.avatar }}" style="max-width: 50px;">
+                                        </a>
+                                    </div>
+                                </td>
+                                <td>{{ question.nickname }}</td>
+                                <td>
+                                    <a question_id="{{ question.question_id }}" id="title_{{ question.question_id }}" class="title" data-tooltip="{{ question.title }}">{{ question.title|striptags|truncate(18, Ture) }}</a>
+                                </td>
+                                <td><a href="javascript:;" onclick="javascript:q_content('{{ question.content }}',this);">{{ question.content|striptags|truncate(18, Ture) }}</a></td>
+                                <td>{{ question.add_time|format_timestamp }}</td>
+                                <td><a href="{{ url_for('user.question_detail', question_id=question.question_id, uid=user.uid,query_type=2)}}">详情</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {{ libs.pagination_html(q_pagination) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 问答内容弹出层 -->
+<div class="modal fade" id="q_content_modal" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog" style="padding-top: 9%;">
+        <div class="modal-content">
+            <form class="form-horizontal" method="GET" id="additional_list_modal_form" autocomplete="off">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">关闭</span></button>
+                    <h4 class="modal-title">问答内容</h4>
+                </div>
+                <div class="modal-body">
+                    {{ libs.textarea('内容', 'content', '',disabled='yes') }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+function q_content(content,adom) {
+    $('#content').val(content);
+    $('#q_content_modal').modal({backdrop:false});
+}
+
+var uid = $('#uid').val();
+$("[href='#user_content']").click(function(){
+    window.location.href = '?uid='+uid+'&check_type=1';
+});
+$("[href='#acount_content']").click(function(){
+    window.location.href = '?uid='+uid+'&check_type=2';
+});
+$("[href='#acount_detail_content']").click(function(){
+    window.location.href = '?uid='+uid+'&check_type=3';
+});
+$("[href='#question_content']").click(function(){
+    window.location.href = '?uid='+uid+'&check_type=4';
+});
+$(document).ready( function(){
+    $('a.remark_for_user').each(function(){
+        var $a = $(this);
+        var uad_id = $a.attr('uad_id');
+        $('#remark_for_user_'+uad_id).darkTooltip({
+            size:'large',
+        });
+    })
+    $('a.title').each(function(){
+        var $a = $(this);
+        var question_id = $a.attr('question_id');
+        $('#title_'+question_id).darkTooltip({
+            size:'large',
+        });
+    })
+    $('a.remark_for_sys').each(function(){
+        var $a = $(this);
+        var uad_id = $a.attr('uad_id');
+        $('#remark_for_sys_'+uad_id).darkTooltip({
+            size:'large',
+        });
+    })
+
+});
+</script>
+{% endblock %}

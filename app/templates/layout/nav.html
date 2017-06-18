@@ -1,0 +1,44 @@
+
+<nav class="navbar-default navbar-static-side" role="navigation">
+<div class="sidebar-collapse">
+    <ul class="nav" id="side-menu">
+        <li class="nav-header">
+            <div class="dropdown profile-element" align="center">
+                <span class="clear">
+                    <span class="block m-t-xs">
+                        <strong class="font-bold"><font size="3" color="red"><h4>一膳管理系统</h4></font></strong>
+                    </span>
+                </span>
+            </div>
+        </li>
+
+    {# 菜单配置项 #}
+    {% set nav_list = session.get('menu') %}
+    {# 生成菜单 #}
+    {% for nav in nav_list %}
+        {% set child_nav_list = nav.get('child', []) %}
+        {% set parent_nav_active = nav|get_nav_classname %}
+        <li{{ parent_nav_active }}>
+            <a href="{{ url_for(nav.get('endpoint'), **nav.get('params', {})) }}">
+                <i class="{{ nav.get('icon') }}"></i>
+                <span class="nav-label">{{ nav.get('name') }}</span>
+                {% if child_nav_list %}
+                    <span class="fa arrow"></span>
+                {% endif %}
+            </a>
+
+        {# 二级菜单 #}
+        {% if child_nav_list %}
+            <ul class="nav nav-second-level {%if not parent_nav_active%}collapse{%endif%}">
+            {% for child_nav in child_nav_list %}
+                <li{{child_nav|get_nav_classname}}><a href="{{ url_for(child_nav.get('endpoint'), **child_nav.get('params', {})) }}">{{ child_nav.get('name') }}</a></li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+        </li>
+    {% endfor %}
+
+    </ul>
+
+</div>
+</nav>

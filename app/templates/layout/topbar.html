@@ -1,0 +1,189 @@
+<div class="row border-bottom">
+<nav style="margin-bottom: 0" role="navigation" class="navbar navbar-static-top">
+    <div class="navbar-header">
+        <a href="#" class="navbar-minimalize minimalize-styl-2 btn btn-primary "><i class="fa fa-bars"></i> </a>
+    </div>
+    <ul class="nav navbar-top-links navbar-right">
+        <!-- Split button -->
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary">
+            {% if session.get('role_id') == 1 %}
+                超级管理员
+            {% else %}
+                {{ session.get('role_name') }}
+            {% endif %}
+            </button>
+            <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="caret"></span>
+                <span class="sr-only">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu">
+            {% set role_temp_list = session.get('role_temp_list')%}
+            {% for role in role_temp_list%}
+                <li>
+                    <a href="javascript:;" onclick="javascript:change_role({{ role.get('value') }}, this);">
+                        <div>
+                            {{ role.get('name') }}
+                        </div>
+                    </a>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+        <li class="dropdown">
+            <a id="topbar_user_box" class="dropdown-toggle count-info" href="#" data-toggle="dropdown" aria-expanded="false">
+                <i class="fa fa-user"></i>
+                <i class="fa fa-caret-down"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-messages">
+                {% if session.get('role_id') == 1 %}
+                <li>
+                    <a href="{{ url_for('sys.menu_list') }}">
+                        <div>
+                            菜单列表
+                        </div>
+                    </a>
+                </li>
+                <li class="divider"></li>
+                <li>
+                    <a href="{{ url_for('power.index') }}">
+                        <div>
+                            权限列表
+                        </div>
+                    </a>
+                </li>
+                <li class="divider"></li>
+                <li>
+                    <a href="{{ url_for('power.role_admin') }}">
+                        <div>
+                            角色管理
+                        </div>
+                    </a>
+                </li>
+                <li class="divider"></li>
+                {% endif %}
+                <li>
+                    <a href="javascript:;" onclick="javascript:change_password(this);">
+                        <div>
+                            修改密码
+                        </div>
+                    </a>
+                </li>
+                <li class="divider"></li>
+                <li>
+                    <a href="{{ url_for('index.signout') }}">
+                        <div>
+                            退出登陆
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</nav>
+</div>
+<!-- 项目步骤弹出层 -->
+<div class="modal fade in " id="change_password_modal" tabindex="-1" role="basic" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form class="form-horizontal" method="GET" id="password_modal_form">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">关闭</span></button>
+                    <h4 class="modal-title">修改密码</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="col-lg-4 control-label">旧密码</label>
+                        <div class="col-lg-8">
+                            <input type="password" autocomplete="off" placeholder="请输入旧密码" value="" name="old_password" id="old_password_modal" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-lg-4 control-label">新密码</label>
+                        <div class="col-lg-8">
+                            <input type="password" autocomplete="off" placeholder="请输入新密码" value="" name="password1" id="password1_modal" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-lg-4 control-label">重复新密码</label>
+                        <div class="col-lg-8">
+                            <input type="password" autocomplete="off" placeholder="请重复新密码" value="" name="password2" id="password2_modal" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary submit">提交</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- 弹框  end  -->
+<script type="text/javascript">
+
+// 步骤编辑
+function change_password(adom) {
+    $('#old_password_modal').val();
+    $('#password1_modal').val();
+    $('#password2_modal').val();
+    $('#change_password_modal').modal({backdrop:false});
+}
+
+function change_role(role_id, adom){
+    $.get('/user/change_role', {'role_id':role_id}, function(res){
+        if (res != 'ok') {
+            window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+            return false;
+        }else{
+            window.wxc.xcConfirm('切换角色成功！', window.wxc.xcConfirm.typeEnum.success);
+            var t1 = setTimeout(function(){
+                window.location.href = "/user/";
+            }, 500);
+        }
+    });
+}
+</script>
+<script type="text/javascript">
+$("form").submit( function () {
+    var old_password = $('#old_password_modal').val();
+    var password1= $('#password1_modal').val();
+    var password2 = $('#password2_modal').val();
+    var ismobile   = /^(((13[0-9]{1})|(14[0-9]{1})|(15[0-9]{1})|(17[0-9]{1})|(18[0-9]{1}))+\d{8})$/;
+    // if ($("#mobile_modal").val() == "") {
+    //     alert("手机号码不能为空！");
+    //     //$("#moileMsg").html("<font color='red'>手机号码不能为空！</font>");
+    //     $("#mobile_modal").focus();
+    //     return false;
+    // }
+
+    // if(!ismobile.test($("#mobile_modal").val()))
+    // {
+    //     alert('请输入有效的手机号码！');
+    //     return false;
+    // }
+    if (password1 != password2) {
+        window.wxc.xcConfirm('密码输入不一致,请重新输入!', window.wxc.xcConfirm.typeEnum.error);
+        return false;
+    }
+    if (password1.length < 6) {
+        window.wxc.xcConfirm('密码长度不能小于6位!', window.wxc.xcConfirm.typeEnum.error);
+        return false;
+    }
+    $.get('/change/password', {'old_password':old_password,'password1':password1, 'password2':password2}, function(res){
+        if (res == 'ok') {
+            window.wxc.xcConfirm('恭喜你,重置密码成功!', window.wxc.xcConfirm.typeEnum.success);
+            window.location.href = "/"
+        }
+        if ( res == 'error_password'){
+            window.wxc.xcConfirm('旧密码不正确!', window.wxc.xcConfirm.typeEnum.warning);
+            return false;
+        }
+        if (res != 'ok'){
+            window.wxc.xcConfirm('重置密码失败!', window.wxc.xcConfirm.typeEnum.warning);
+            return false;
+        }
+    });
+    return false;
+});
+
+</script>

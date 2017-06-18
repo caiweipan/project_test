@@ -1,0 +1,129 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+
+<li><a href="{{ url_for('goods.category_list')}}">分类列表</a></li>
+{% endblock %}
+
+{% block body %}
+<link rel="stylesheet" href="//apps.bdimg.com/libs/jqueryui/1.10.4/css/jquery-ui.min.css">
+<div class="row">
+    <div class="col-lg-12 col-md-12 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="POST" action="{{ url_for('goods.category_save') }}" enctype="multipart/form-data">
+                  {{ libs.input('分类名称', 'category_name', f.category_name, required='required', help='如：鱼、菜、等') }}
+                  <input type="hidden" name="edit_gc_id", id="edit_gc_id" value="{{ edit_gc_id }}">
+                  {{ libs.img('封面原图', 'category_img', f.category_img, help='一张照片') }}
+                  {% set sort_order = f.sort_order if f else 0|toint %}
+                  {{ libs.select('状态', 'status', f.status, [('请选择……',''),('显示', '1'),('不显示','0')]) }}
+                  {{ libs.input('排序', 'sort_order', sort_order, type='number', required='required min=0 max=1000 step=1', help='值大的排在前面') }}
+                  {{ libs.textarea('简介', 'brief', f.brief, required='required') }}
+                  {{ libs.submit() }}
+              </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-6" style="display: none;">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">属性组列表</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="GET" enctype="multipart/form-data">
+              {{ libs.dbselect('属性组', 'ag_id', '', attr_group_list, 'ag_name', 'ag_id', required='required') }}
+              </form>
+              <div class="form-group" style="margin-bottom: 7%;">
+                  <div class="col-lg-4"></div>
+                  <div class="col-lg-8">
+                      <button type="submit" class="btn btn-primary" id="attr_group_button">{{ '提交' }}</button>
+                  </div>
+              </div>
+                <table class="table table-hover">
+                  <thead>
+                      <tr>
+                          <th>属性组ID</th>
+                          <th>属性组名称</th>
+                          <th>属性组别名</th>
+                          <th>属性组类别</th>
+                          <!--<th>&nbsp;</th>-->
+                      </tr>
+                  </thead>
+                  <tbody>
+                  {% for attr_group in attr_group_cat_list %}
+                      <tr>
+                          <td>{{ attr_group.ag_id }}</td>
+                          <td class="attr_name" attr_id="{{ attr_group.ag_id }}">{{ attr_group.ag_name }}</td>
+                          <td>{{ attr_group.alias_name }}</td>
+                          <td>{{ const.AG_TYPE_DICT.get(attr_group.ag_type, '未知') }}</td>
+                          {# <td><a href="javascript:;" onclick="javascript:attr_delete({{ attr.attr_id }}, this);">删除</a></td> #}
+                      </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+        {#         {{ libs.pagination_html(pagination) }} #}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script src="//apps.bdimg.com/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//apps.bdimg.com/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+<script type="text/javascript">
+// $(document).ready(function() {
+//   var edit_gc_id = $("#edit_gc_id").val();
+//   $( function() {
+//       $( "#tags" ).autocomplete({
+//           source: function(request, response) {
+//               $.ajax({
+//                   url:"/goods/category_name?edit_gc_id="+edit_gc_id+"&tags_value="+$("#tags").val(),
+//                   type:"get",
+//                   dataType:"json",
+//                   data: {'category_name':request.term},
+//                   success:function(data){
+//                       response($.map(data.data.category_name_list, function(item) {
+//                           return {
+//                               label: item.category_name,
+//                               value: item.gc_id
+//                           }
+//                       }));
+//                   },
+//                   error:function(data){
+//                       window.wxc.xcConfirm('请求服务器失败', window.wxc.xcConfirm.typeEnum.error);
+//                       return false;
+//                   }
+//               });
+//           },
+//           select: function(e, ui) {
+//               this.value = ui.item.label;
+//               $("#gc_id").val(ui.item.value);
+//               return false;
+//           }
+//       });
+//   });
+// });
+// $('button:submit').click(function(){
+//   var gc_id = $('#gc_id').val();
+//   if (gc_id <= 0){
+//     window.wxc.xcConfirm('请选择上级分类', window.wxc.xcConfirm.typeEnum.error);
+//     return false;
+//   }
+// });
+$(":submit:last").click(function(){
+    var edit_gc_id = $("#edit_gc_id").val();
+    var ag_id = $("#ag_id").val();
+    $.get('/goods/category/add_attr_group', {'edit_gc_id':edit_gc_id, 'ag_id':ag_id}, function(res){
+      if ( res != 'ok'){
+        window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+        return false;
+      }
+      if (res == 'ok'){
+        window.location.href = "/goods/category/edit?gc_id="+edit_gc_id;
+      }
+    });
+});
+</script>
+{% endblock %}

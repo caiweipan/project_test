@@ -1,0 +1,71 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'分类ID', 'name':'gc_id',},
+        {'label':'分类名称', 'name':'category_name',},
+        {'label':'增加时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<table class="table ">
+    <thead>
+        <tr>
+            <th>分类ID</th>
+            <th>封面原图</th>
+            <th>商品名称</th>
+            <th>简介</th>
+            <th>排序</th>
+            <th>状态</th>
+            <th>添加时间</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for category in category_list %}
+        <tr>
+            <td>{{ category.gc_id }}</td>
+            <td style="padding-bottom: 0px;padding-top: 0px;">
+                <div class="lightBoxGallery" style="text-align: left;">
+                    <a href="{{ category.category_img }}" title="封 面 原 图" data-gallery=""><img src="{{ category.category_img }}" style="max-width: 50px;">
+                    </a>
+                </div>
+            </td>
+            <td><a href="{{ url_for('goods.category_edit', gc_id=category.gc_id)}}">{{ category.category_name }}</a></td>
+            <td><a id="brief_{{ category.gc_id }}" gc_id="{{ category.gc_id }}" class="brief" data-tooltip="{{ category.brief }}">{{ category.brief|striptags|truncate(18, Ture) }}</a></td>
+            <td>{{ category.sort_order }}</td>
+            <td>{{ const.COLUMN_STATUS.get(category.status, '不显示') }}</td>
+            <td>{{ category.add_time|format_timestamp }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+
+<script type="text/javascript">
+// $(function () { $("[data-toggle='tooltip']").tooltip(); });
+$("a.add_new").click(function(){
+    window.location.href = '/goods/category_add';
+});
+$(document).ready( function(){
+    $('a.brief').each(function(){
+        var $a = $(this);
+        var gc_id = $a.attr('gc_id');
+        $('#brief_'+gc_id).darkTooltip({
+            size:'large',
+            trigger:'click',
+            animation:'flipIn',
+            gravity:'west',
+            modal: false,
+        });
+    })
+});
+</script>
+{% endblock %}
+

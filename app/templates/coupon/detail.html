@@ -1,0 +1,95 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="/coupon/">优惠券列表</a></li>
+{% endblock %}
+
+{% block box_body %}
+<form class="form-horizontal wizard" method="POST" action="{{ url_for('coupon.save') }}">
+    <input type="hidden" name="cb_id" value="{{ f.cb_id }}">
+    <input type="hidden" name="limit_goods" id="limit_goods" value="{{ f.limit_goods }}">
+
+    {% if f.cb_id %}
+        {{ libs.form_label('批次号', f.cb_id) }}
+    {% endif %}
+    {{ libs.select('是否有效', 'is_valid', f.is_valid, [
+                        ('请选择……', ''),
+                        ('无效', '0'),
+                        ('有效', '1')], required='required') }}
+
+    {{ libs.input('批次名称', 'cb_name', f.cb_name, required='required') }}
+    {{ libs.input('优惠券来源说明', 'coupon_from', f.coupon_from, required='required', help='如：新人体验、分享闺密注册') }}
+    {{ libs.input('优惠券名称', 'coupon_name', f.coupon_name, required='required', help='如:50元优惠券') }}
+    {{ libs.input('优惠券金额', 'coupon_amount', f.coupon_amount, required='required min=0.00 step=0.01') }}
+    {{ libs.input('满多少可用', 'limit_amount', f.limit_amount, type='number', required='required max=9999 min=0.00 step=0.01', help='如：满100元可用, 0则表示没有限制') }}
+
+    {{ libs.input('发行数量', 'publish_num', f.publish_num, type='number', required='required min=1 max=100000000 step=1') }}
+    {{ libs.datepicker('派券开始时间', 'begin_time', f.begin_time, required='required') }}
+    {{ libs.datepicker('派券结束时间', 'end_time', f.end_time, required='required') }}
+    {{ libs.input('领券有效天数', 'valid_days', f.valid_days, type='number', required='required', help='如：30、60、90、180，0表示从派券开始时间算起。') }}
+    <div class="form-group" style="display: none;">
+        <label class="col-lg-4 control-label">适用项目</label>
+        <div class="col-lg-8 ">
+            <div class="checkbox i-checks" id="all_goods">
+                <div class="icheckbox_square-green">
+                    <input type="checkbox" id="goods_id_all" name="goods_id_all" value="all" >
+                    <ins class="iCheck-helper"></ins>
+                </div>
+                <i></i>全部
+            </div>
+            <hr>
+        {% for goods in goods_list %}
+            <div class="checkbox i-checks goods-checkbox">
+                <div class="icheckbox_square-green">
+                    <input name="goods_id" type="checkbox" value="{{ goods.goods_id }}">
+                    <ins class="iCheck-helper"></ins>
+                </div> <i></i>{{ goods.goods_id }} - {{ goods.city }} - {{ goods.goods_price }}元 - {{ goods.goods_name }}
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+
+
+    {{ libs.submit() }}
+
+</form>
+
+{% endblock %}
+
+
+{% block footer %}
+<script type="text/javascript">
+// 全部 选中
+$('#all_goods').on('ifChecked', function(event){
+    $('.goods-checkbox').iCheck('check');
+});
+
+// 全部 取消
+$('#all_goods').on('ifUnchecked', function(event){
+    $('.goods-checkbox').iCheck('uncheck');
+});
+
+$(document).ready(function() {
+    var limit_goods = $('#limit_goods').val();
+    if (limit_goods == 'all') {
+        $('#all_goods').iCheck('check');
+
+    } else {
+        $('input[name=goods_id]').each(function(){
+            var $input = $(this);
+            var goods_id = $input.val();
+            if (limit_goods.indexOf(goods_id+',') > -1 || limit_goods.indexOf(','+goods_id) > -1||goods_id.length == 1 && limit_goods.indexOf(goods_id) > -1) {
+                $input.parents('.i-checks').iCheck('check');
+            }
+            if($input.attr('checked')== undefined){
+                $("#all_goods").attr("checked",'');
+            }
+        })
+    }
+
+});
+
+</script>
+{% endblock %}

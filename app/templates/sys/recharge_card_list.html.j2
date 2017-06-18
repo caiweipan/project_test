@@ -1,0 +1,105 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'充值卡ID', 'name':'rc_id',},
+        {'label':'金额', 'name':'amount',},
+        {'label':'赠送金额', 'name':'gift',},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>充值卡ID</th>
+            <th>金额</th>
+            <th>赠送金额</th>
+            <th width="15%">排序</th>
+            <th>添加时间</th>
+            <th>更新时间</th>
+            <th>详情</th>
+            <th>移除</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for card in recharge_card_list %}
+        <tr>
+            <td>{{ card.rc_id }}</td>
+            <td>{{ card.amount }}</td>
+            <td>{{ card.gift }}</td>
+            <td class="sort_order" rc_id="{{ card.rc_id }}">{{ card.sort_order }}</td>
+            <td>{{ card.add_time|format_timestamp }}</td>
+            <td>{{ card.update_time|format_timestamp }}</td>
+            <td><a href="{{url_for('sys.recharge_card_detail', rc_id=card.rc_id)}}">详情</a></td>
+            <td><a href="javascript:;" onclick="javascript:delete_rc({{ card.rc_id }}, this);">移除</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$("a.add_new").click(function(){
+    window.location.href = '/sys/recharge_card/add';
+});
+$('td.sort_order').click(function(){
+    var $td = $(this);
+    var $tr = $(this).parent();
+    var rc_id = $(this).attr('rc_id');
+    var sort = $.trim($td.text());
+    var input = $("<input type='text' style='width: 39%;' value='" + sort + "'/>");
+    $td.html(input);
+    input.click(function () { return false; });
+
+    //获取焦点
+    input.trigger("focus");
+
+    //文本框失去焦点后提交内容，重新变为文本
+    input.blur(function () {
+        var new_sort = $(this).val();
+
+        //判断文本有没有修改
+        if (new_sort != sort) {
+            $.get('/sys/card_sort/modify', {'rc_id':rc_id, 'sort':sort, 'new_sort':new_sort}, function (res){
+                if (res == 'ok') {
+                    $td.html(new_sort);
+                } else {
+                    window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                    $td.html(sort);
+                    return false;
+                }
+            });
+        } else {
+            $td.html(sort);
+        }
+    });
+});
+</script>
+<script type="text/javascript">
+// $(function () { $("[data-toggle='tooltip']").tooltip(); });
+function delete_rc(rc_id, adom) {
+    window.wxc.xcConfirm('确定要移除该充值卡吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/sys/recharge_card/delete', {'rc_id':rc_id}, function(res){
+            if (res != 'ok'){
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            window.wxc.xcConfirm('移除成功！', window.wxc.xcConfirm.typeEnum.success);
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+</script>
+{% endblock %}

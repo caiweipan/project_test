@@ -1,0 +1,50 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'属性组名称', 'name':'ag_name',},
+        {'label':'类别', 'name':'ag_type', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'筛选', 'value':'1'},
+                {'name':'SKU', 'value':'2'},
+                {'name':'未知', 'value':'0'},
+            ]
+        },
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<table class="table ">
+    <thead>
+        <tr>
+            <th>属性组ID</th>
+            <th>属性组名称</th>
+            <th>类别</th>
+            <!--<th>&nbsp;</th>-->
+        </tr>
+    </thead>
+    <tbody>
+    {% for group in group_list %}
+        <tr>
+            <td>{{ group.ag_id }}</td>
+            <td><a href="{{ url_for('goods.attr_group_edit', ag_id=group.ag_id) }}">{{ group.ag_name }}</a></td>
+            <td>{{ const.AG_TYPE_DICT.get(group.ag_type, '未知') }}</td>
+            <!--<td><a href="javascript:;">删除</a></td>-->
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+
+<script type="text/javascript">
+</script>
+
+{% endblock %}
+

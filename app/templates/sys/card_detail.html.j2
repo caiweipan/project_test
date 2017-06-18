@@ -1,0 +1,30 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+
+<li><a href="{{ url_for('sys.ad_list')}}">充值卡列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="POST" action="{{ url_for('sys.save_card') }}" enctype="multipart/form-data">
+                <input type="hidden" name="rc_id" id="rc_id" value="{{ f.rc_id }}">
+                {{ libs.input('金额', 'amount', f.amount, type='number', required='required min=0.00 step=0.01') }}
+                {{ libs.input('赠送金额', 'gift', f.gift, type='number', required='required min=0.00 step=0.01') }}
+                {{ libs.input('排序', 'sort_order', f.sort_order|default(0), type='number', required='required min=0 max=1000 step=1', help='值大的排在前面') }}
+                {{ libs.submit() }}
+              </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'订单id', 'name':'order_id',},
+        {'label':'商品id', 'name':'goods_id',},
+        {'label':'售后类型', 'name':'after_type', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'退货', 'value':'1'},
+                {'name':'默认', 'value':'0'},
+            ]},
+        {'label':'售后状态', 'name':'status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'提交售后', 'value':'1'},
+                {'name':'审核拒绝', 'value':'2'},
+                {'name':'审核通过', 'value':'3'},
+                {'name':'店铺已收货', 'value':'4'},
+                {'name':'已经退款', 'value':'5'},
+                {'name':'客户确认完成', 'value':'6'},
+                {'name':'默认', 'value':'0'},
+            ]},
+        {'label':'增加时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+{% set AFTER_TYPE = {1:'退货', 0:'默认'}%}
+{% set STATUS = {1:'提交售后',2:'审核拒绝', 3:'审核通过', 4:'店铺已收货', 5:'已经退款', 6:'客户确认完成', 0:'默认'}%}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>主键ID</th>
+            <th>订单商品ID</th>
+            <th>订单ID</th>
+            <th>商品ID</th>
+            <th>用户名</th>
+            <th>售后类型</th>
+            <th>售后状态</th>
+            <th>增加时间</th>
+            <th>详情</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for _a in a_list %}
+        <tr>
+            <td>{{ _a.after_id }}</td>
+            <td>{{ _a.og_id }}</td>
+            <td>{{ _a.order_id }}</td>
+            <td>{{ _a.goods_id }}</td>
+            <td>{{ USER_NAME.get(_a.uid, '') }}</td>
+            <td>{{ AFTER_TYPE.get(_a.after_type, '') }}</td>
+            <td>{{ STATUS.get(_a.status, '') }}</td>
+            <td>{{ _a.add_time|format_timestamp }}</td>
+            <td><a href="{{ url_for('after.detail', after_id=_a.after_id )}}">详情</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+{% endblock %}
+

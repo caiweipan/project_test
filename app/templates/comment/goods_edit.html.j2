@@ -1,0 +1,30 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/comment/goods') }}">商品列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+                <form class="form-horizontal wizard" method="POST" action="{{ url_for('comment.goods_edit_save') }}" enctype="multipart/form-data">
+                    <input id="comment_id" type="hidden" name="comment_id" value="{{ comment_id }}">
+                    <input id="goods_id" type="hidden" name="goods_id" value="{{ goods_id }}">
+                    {{ libs.input('商品名称', 'tname', f.tname, required="required") }}
+                    {{ libs.img('商品封面原图', 'timg', f.timg) }}
+                    {{ libs.input('评价分数', 'star', f.star, type='number', required='required max=5 min=0.0 step=0.1') }}
+                    {{ libs.textarea('评价内容', 'content', f.content, required='required') }}
+                    {{ libs.datetimepicker('添加时间', 'add_time', f.add_time, required='required') }}
+                    {{ libs.submit() }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

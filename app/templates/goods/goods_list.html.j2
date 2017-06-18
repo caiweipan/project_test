@@ -1,0 +1,113 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'商品ID', 'name':'goods_id'},
+        {'label':'商品名称', 'name':'goods_name',},
+        {'label':'商品分类', 'name':'gc_id', 'type':'select',
+            'options':goods_cat_list},
+        {'label':'商品状态', 'name':'is_sale', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'上架', 'value':'1'},
+                {'name':'下架', 'value':'0'},
+            ]
+        },
+        {'label':'商品品类', 'name':'kind', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'普通商品', 'value':'1'},
+                {'name':'一元购商品', 'value':'2'},
+                {'name':'默认', 'value':'0'},
+            ]
+        },
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<table class="table ">
+    <thead>
+        <tr>
+            <th>商品ID</th>
+            <th>分类</th>
+            <th>图片</th>
+            <th>商品名称</th>
+            <th width="18%">排序</th>
+            <th>销售价格</th>
+            <th>销量</th>
+            <th>商品品类</th>
+            <th>商品状态</th>
+            <th>增加时间</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for goods in goods_list %}
+        <tr>
+            <td>{{ goods.goods_id }}</td>
+            <td>{{ goods.category_name }}</td>
+            <td style="padding-bottom: 0px;padding-top: 0px;">
+                <div class="lightBoxGallery" style="text-align: left;">
+                    <a href="{{ goods.goods_img }}" title="商 品 图 片" data-gallery=""><img src="{{ goods.goods_img }}" style="max-width: 50px;">
+                    </a>
+                </div>
+            </td>
+            <td><a href="{{ url_for('goods.goods_edit', goods_id=goods.goods_id) }}">{{ goods.goods_name }}</a></td>
+            <td class="sort_order" goods_id="{{ goods.goods_id }}">{{ goods.sort_order }}</td>
+            <td>{{ goods.goods_price }}</td>
+            <td>{{ goods.sale_count }}</td>
+            <td>{{ const.KIND.get(goods.kind, '默认') }}</td>
+            {% set is_sale= '上架' if goods.is_sale == 1 else '下架'%}
+            <td>{{ is_sale }}</td>
+            <td>{{ goods.add_time|format_timestamp }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+
+<script type="text/javascript">
+$("a.add_new").click(function(){
+    window.location.href = '/goods/add';
+});
+$('td.sort_order').click(function(){
+    var $td = $(this);
+    var $tr = $(this).parent();
+    var goods_id = $(this).attr('goods_id');
+    var sort = $.trim($td.text());
+    var input = $("<input type='text' style='width: 30%;' value='" + sort + "'/>");
+    $td.html(input);
+    input.click(function () { return false; });
+
+    //获取焦点
+    input.trigger("focus");
+
+    //文本框失去焦点后提交内容，重新变为文本
+    input.blur(function () {
+        var new_sort = $(this).val();
+
+        //判断文本有没有修改
+        if (new_sort != sort) {
+            $.get('/goods/sort/modify', {'goods_id':goods_id, 'sort':sort, 'new_sort':new_sort}, function (res){
+                if (res == 'ok') {
+                    $td.html(new_sort);
+                } else {
+                    window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                    $td.html(sort);
+                    return false;
+                }
+            });
+        } else {
+            $td.html(sort);
+        }
+    });
+});
+</script>
+
+{% endblock %}
+

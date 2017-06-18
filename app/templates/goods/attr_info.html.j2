@@ -1,0 +1,36 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/goods/attr/list') }}">属性列表</a></li>
+{% endblock %}
+
+{% block box_body %}
+<form class="form-horizontal" method="POST" action="{{ url_for('goods.attr_save') }}">
+    {{ libs.input('属性名称', 'attr_name', f.attr_name, required='required', help='') }}
+    <div class="form-group">
+        <label class="col-lg-4 control-label">属性组</label>
+        <div class="col-lg-8 ">
+            {% set errmsg = g['errmsg'] %}
+            {% set errmsg_text = errmsg.get(name, '') if errmsg else '' %}
+            {% set error_class = 'has-error' if errmsg_text else '' %}
+            <select id="ag_id" class="form-control" name="ag_id" size="1" required="">
+                <option value="">请选择……</option>
+                {% for attr_group in attr_group_list %}
+                    {% set val = attr_group.ag_id %}
+                    {% set name = attr_group.ag_name %}
+                    {% set selected = 'selected="selected"' if val|string == f.ag_id|string else '' %}
+                    <option value="{{ val }}" {{selected}}>{{ name }}({{ const.AG_TYPE_DICT.get(attr_group.ag_type, '未知') }})</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <input type="hidden" name="attr_id" value="{{ f.attr_id }}">
+    {{ libs.submit() }}
+</form>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'用户昵称', 'name':'nickname',},
+        {'label':'抽奖活动名称', 'name':'lottery_name'},
+        {'label':'订单ID', 'name':'order_id',},
+        {'label':'抽奖号码', 'name':'lottery_number',},
+        {'label':'是否中奖', 'name':'is_prize', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'是', 'value':'1'},
+                {'name':'否', 'value':'0'},
+            ]},
+        {'label':'增加时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+
+{% block data_body %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>主键ID</th>
+            <th>用户昵称</th>
+            <th>抽奖活动名称</th>
+            <th>订单ID</th>
+            <th>抽奖号码</th>
+            <th>是否中奖</th>
+            <th>增加时间</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for lottery_number in lottery_number_list %}
+        <tr>
+            <td>{{ lottery_number.ln_id }}</td>
+            <td>{{ lottery_number.nickname }}</td>
+            <td>{{ lottery_number.lottery_name }}</td>
+            <td>{{ lottery_number.order_id }}</td>
+            <td>{{ lottery_number.lottery_number }}</td>
+            <td>{{ lottery_number.is_prize }}</td>
+            <td>{{ lottery_number.add_time|format_timestamp }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+function delete_lottery_number(uis_id,uid, adom) {
+    var txt = '确定要移除该用户吗？'
+    window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/lottery_number/delete', {'uis_id':uis_id, 'uid':uid}, function(res){
+            if (res != 'ok'){
+                var txt= res;
+                window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            var txt='删除成功！';
+            window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.success);
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+</script>
+{% endblock %}

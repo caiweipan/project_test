@@ -1,0 +1,127 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+{% if query_type == 1%}
+<li><a href="{{ url_for('question.index') }}">提问列表</a></li>
+{% else %}
+<li><a href="{{ url_for('user.user_detail', check_type=4,uid=uid) }}">提问列表</a></li>
+{% endif %}
+{% endblock %}
+
+{% block body %}
+<input type="hidden" name="uid" id="uid" value="{{ uid }}">
+<input type="hidden" name="question_id" id="question_id" value="{{ question_id }}">
+<input type="hidden" name="query_type" id="query_type" value="{{ query_type }}">
+<div class="row">
+    <ul id="myTab" class="nav nav-tabs" style="background-color: #ffffff;">
+        {% set CHECK_ACTIVE = 'class="active"' if check_type == 1 else ''%}
+        {% set ARIA = 'true' if check_type == 1 else 'false'%}
+        <li {{ CHECK_ACTIVE }}><a href="#question_detail" data-toggle="tab" aria-expanded="{{ ARIA }}">提问详情</a></li>
+        {% set CHECK_ACTIVE = 'class="active"' if check_type == 2 else ''%}
+        {% set ARIA = 'true' if check_type == 2 else 'false'%}
+        <li {{ CHECK_ACTIVE }}><a href="#answer_list" data-toggle="tab" aria-expanded="{{ ARIA }}">回答列表</a></li>
+    </ul>
+    <div id="myTabContent" class="tab-content">
+        {% set ACTIVE = 'active in' if check_type == 1 else ''%}
+        <div class="tab-pane fade {{ ACTIVE }}" id="question_detail">
+            <div class="col-lg-12 col-md-12 col-xs-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">提问详情</div>
+                    <div class="ibox-content">
+                        <table class="table table-bordered">
+                            <tr><th>提问ID</th><td>{{ f.question_id }}</td></tr>
+                            <tr><th>用户id</th><td>{{ f.uid }}</td></tr>
+                            <tr><th>头像</th>
+                                <td style="padding-bottom: 0px;padding-top: 0px;">
+                                    <div class="lightBoxGallery" style="text-align: left;">
+                                        <a href="{{ f.avatar }}" title="头  像" data-gallery=""><img src="{{ f.avatar }}" style="max-width: 50px;">
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr><th>昵称</th><td>{{ f.nickname }}</td></tr>
+                            <tr><th>标题</th><td>{{ f.title }}</td></tr>
+                            <tr><th>提问内容</th><td>{{ f.content }}</td></tr>
+                            <tr><th>封面原图</th>
+                                <td style="padding-bottom: 0px;padding-top: 0px;">
+                                    <div class="lightBoxGallery" style="text-align: left;">
+                                        <a href="{{ f.question_img }}" title="封 面 原 图" data-gallery="">
+                                            <img src="{{ f.question_img }}" style="max-width: 50px;">
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr><th>最佳回答ID</th><td>{{ f.qa_id }}</td></tr>
+                            <tr><th>最佳回答数据</th><td>{{ f.answer_data }}</td></tr>
+                            <tr><th>回答总数</th><td>{{ f.answer_count }}</td></tr>
+                            <tr><th>增加时间</th><td>{{ f.add_time|format_timestamp }}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% set ACTIVE = 'active in' if check_type == 2 else ''%}
+        <div class="tab-pane fade {{ ACTIVE }}" id="answer_list">
+            <div class="col-lg-12 col-md-12 col-xs-12">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">回答列表</div>
+                    <div class="ibox-content">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>回答ID</th>
+                                    <th>头像</th>
+                                    <th>昵称</th>
+                                    <th>内容</th>
+                                    <th>封面原图</th>
+                                    <th>赞同总数</th>
+                                    <th>增加时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for qa in qa_list %}
+                                <tr>
+                                    <td>{{ qa.qa_id }}</td>
+                                    <td style="padding-bottom: 0px;padding-top: 0px;">
+                                        <div class="lightBoxGallery" style="text-align: left;">
+                                            <a href="{{ qa.avatar }}" title="头  像" data-gallery="">
+                                                <img src="{{ qa.avatar }}" style="max-width: 50px;">
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td><a href="{{ url_for('user.user_detail',uid=user.uid)}}">{{ qa.nickname }}</a></td>
+                                    <td>{{ qa.content }}</td>
+                                    <td style="padding-bottom: 0px;padding-top: 0px;">
+                                        <div class="lightBoxGallery" style="text-align: left;">
+                                            <a href="{{ qa.question_img }}" title="封 面 原 图" data-gallery="">
+                                                <img src="{{ qa.question_img }}" style="max-width: 50px;">
+                                            </a>
+                                        </div>
+                                    </td>
+                                    <td>{{ qa.agree_count }}</td>
+                                    <td>{{ qa.add_time|format_timestamp }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        {{ libs.pagination_html(pagination) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+var uid = $('#uid').val();
+var query_type = $('#query_type').val();
+var question_id = $('#question_id').val();
+$("[href='#question_detail']").click(function(){
+    window.location.href = '?uid='+uid+'&question_id='+question_id+ '&check_type=1&query_type='+query_type;
+});
+$("[href='#answer_list']").click(function(){
+    window.location.href = '?uid='+uid+'&question_id='+question_id+'&check_type=2&query_type='+query_type;
+});
+</script>
+{% endblock %}

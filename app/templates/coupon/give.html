@@ -1,0 +1,88 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="/coupon/">优惠券列表</a></li>
+{% endblock %}
+
+{% block data_body %}
+<div class="row">
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>批次号</th>
+                    <th>批次名称</th>
+                    <th>优惠券名称</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>优惠券金额</th>
+                    <th>满多少金额可以使用</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for coupon_batch in coupon_batch_list %}
+                <tr>
+                    <td>{{ coupon_batch.cb_id }}</td>
+                    <td>{{ coupon_batch.cb_name }}</td>
+                    <td>{{ coupon_batch.coupon_name }}</td>
+                    <td>{{ coupon_batch.begin_time|format_timestamp('%m/%d') }}</td>
+                    <td>{{ coupon_batch.end_time|format_timestamp('%m/%d') }}</td>
+                    <td>{{ coupon_batch.coupon_amount }}</td>
+                    <td>{{ coupon_batch.limit_amount }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <hr>
+        <div class="col-lg-10 col-md-10 col-xs-8">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">获取优惠券</div>
+                <div class="ibox-content">
+                    <form class="form-horizontal wizard" method="POST" action="{{ url_for('coupon.coupon_acquire') }}">
+                        <input type="hidden" name="coupon_id" value="{{ f.coupon_id }}">
+
+                        {{ libs.input('请输入优惠券批次号', 'cb_id', f.cb_id, type='number', required='required min=1 step=1', help='如果优惠券批次号为7, 就是选择:新用户注册--100元代金券')}}
+                        {{ libs.textarea('用户手机号码', 'mobile', f.mobile, required='required') }}
+                        {{ libs.submit() }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+// 全部 选中
+$('#all_coupon').on('ifChecked', function(event){
+    $('.coupon-checkbox').iCheck('check');
+});
+
+// 全部 取消
+$('#all_coupon').on('ifUnchecked', function(event){
+    $('.coupon-checkbox').iCheck('uncheck');
+});
+
+$(document).ready(function() {
+    var limit_coupon = $('#limit_coupon').val();
+    if (limit_coupon == 'all') {
+        $('#all_coupon').iCheck('check');
+
+    } else {
+        $('input[name=cb_id]').each(function(){
+            var $input = $(this);
+            var cb_id = $input.val();
+            if (limit_coupon.indexOf(cb_id+',') > -1 || limit_coupon.indexOf(','+cb_id) > -1) {
+                $input.parents('.i-checks').iCheck('check');
+            }
+        })
+    }
+
+});
+
+</script>
+{% endblock %}

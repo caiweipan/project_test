@@ -1,0 +1,80 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'云购活动模板ID', 'name':'lt_id',},
+        {'label':'期数', 'name':'section_number',},
+        {'label':'商品名称', 'name':'goods_id', 'type':'select',
+            'options':goods_list},
+        {'label':'活动名称', 'name':'lottery_name',},
+        {'label':'增加时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-4'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>云购活动模板ID</th>
+            <th>期数</th>
+            <th>商品名称</th>
+            <th>活动名称</th>
+            <th>封面原图</th>
+            <th>销售价格</th>
+            <th>增加时间</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for lottery_temp in lottery_temp_list %}
+        <tr>
+            <td>{{ lottery_temp.lt_id }}</td>
+            <td>{{ lottery_temp.section_number }}</td>
+            <td>{{ lottery_temp.goods_name }}</td>
+            <td>{{ lottery_temp.lottery_name }}</td>
+            <td style="padding-bottom: 0px;padding-top: 0px;">
+                <div class="lightBoxGallery" style="text-align: left;">
+                    <a href="{{ lottery_temp.lottery_img }}" title="封 面 原 图" data-gallery=""><img src="{{ lottery_temp.lottery_img }}" style="max-width: 50px;">
+                    </a>
+                </div>
+            </td>
+            <td>{{ lottery_temp.lottery_price }}</td>
+            <td>{{ lottery_temp.add_time|format_timestamp }}</td>
+            <td><a href="{{ url_for('lottery.lottery_temp_detail', lt_id=lottery_temp.lt_id)}}">详情</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{{ libs.pagination_html(pagination) }}
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$("a.add_new").click(function(){
+    window.location.href = '/lottery/add_template';
+});
+function delete_lottery(uis_id,uid, adom) {
+    var txt = '确定要移除该用户吗？'
+    window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/lottery/delete', {'uis_id':uis_id, 'uid':uid}, function(res){
+            if (res != 'ok'){
+                var txt= res;
+                window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            var txt='删除成功！';
+            window.wxc.xcConfirm(txt, window.wxc.xcConfirm.typeEnum.success);
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+</script>
+{% endblock %}

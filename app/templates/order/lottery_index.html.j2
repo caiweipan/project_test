@@ -1,0 +1,136 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'订单id', 'name':'order_id'},
+        {'label':'交易ID', 'name':'tran_id'},
+        {'label':'下单时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-3'},
+        {'label':'支付时间', 'name':'paid_time', 'type':'daterange', 'col-lg':'col-lg-3'},
+        {'label':'支付状态', 'name':'pay_status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'待付款', 'value':'1'},
+                {'name':'已付款', 'value':'2'},
+                {'name':'默认', 'value':'0'}
+            ]},
+        {'label':'订单状态', 'name':'order_status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'创建订单', 'value':'1'},
+                {'name':'已完成', 'value':'2'},
+                {'name':'已取消', 'value':'3'},
+                {'name':'默认', 'value':'0'}
+            ]},
+        {'label':'发货状态', 'name':'shipping_status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'未发货', 'value':'1'},
+                {'name':'已发货', 'value':'2'},
+                {'name':'默认', 'value':'0'}
+            ]},
+        {'label':'收货状态', 'name':'deliver_status', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'待收货', 'value':'1'},
+                {'name':'已收货', 'value':'2'},
+                {'name':'默认', 'value':'0'}
+            ]},
+        {'label':'活动模板列表', 'name':'lt_id', 'type':'select',
+            'options':lottery_template_list},
+        {'label':'活动期数列表', 'name':'lottery_id', 'type':'select',
+            'options':section_number_list},
+        {'label':'是否中奖', 'name':'is_prize', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'是', 'value':'1'},
+                {'name':'否', 'value':'0'},
+            ]},
+        {'label':'是否已经评价', 'name':'is_comment', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'是', 'value':'1'},
+                {'name':'否', 'value':'0'},
+            ]},
+        {'label':'快递单号', 'name':'shipping_sn', },
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+
+{% block data_body %}
+{% set ORDER_STATUS = { 0:'默认',1:'创建订单',2:'已完成',3:'已取消'}%}
+<div class="table-responsive">
+<table class="table">
+    <thead>
+        <tr>
+            <th>订单ID</th>
+            <th>抽奖活动期数</th>
+            <th>快递单号</th>
+            <th>支付状态</th>
+            <th>订单状态</th>
+            <th>发货状态</th>
+            <th>收货状态</th>
+            <th>是否已经评价</th>
+            <th>下单时间</th>
+            <th>支付时间</th>
+            <th>是否中奖</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for order in order_list %}
+        <tr>
+            <td><a href="{{ url_for('order.detail', order_id=order.order_id) }}">{{ order.order_id }}</a></td>
+            <td>{{ order.section_number_list}}</td>
+            <td>{{ order.shipping_sn }}</td>
+            <td>{{ const.PAY_STATUS.get(order.pay_status, '默认') }}</td>
+            <td>{{ ORDER_STATUS.get(order.order_status, '默认') }}</td>
+            <td>{{ const.SHIPPING_STATUS.get(order.shipping_status, '默认')}}</td>
+            <td>{{ const.DILIVERY_STATUS.get(order.deliver_status, '默认') }}</td>
+            <td>{{ const.IS_COMMENT.get(order.is_comment, '否')  }}</td>
+            <td>{{ order.add_time|format_timestamp }}</td>
+            <td>{{ order.paid_time|format_timestamp }}</td>
+            <td><a href="{{ url_for('order.prize_detail',ln_id=order.ln_id, order_id=order.order_id)}}">{{ const.IS_PRIZE.get(order.is_prize, '') }}</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{{ libs.pagination_html(pagination) }}
+
+{% endblock %}
+{% block footer %}
+<script type="text/javascript">
+$(document).ready(function(){
+    $(function () { $("[data-toggle='tooltip']").tooltip(); });
+    var lottery_template_text = "<select class='selectpicker form-control' name='lt_id' id='lt_id' size='1'>" +
+                    "{% for lottery_template in lottery_template_list %}" +
+                        "{% set selected = 'selected' if lottery_template.get('name') == f.lt_id else '' %}"+
+                        "<option value='{{ lottery_template.get('value')}}' {{ selected }}>{{ lottery_template.get('name') }}</option>"+
+                    "{% endfor %}"+
+                    "</select>";
+    var section_number_text = "<select class='selectpicker form-control' name='lottery_id' id='lottery_id' size='1'>" +
+                        "<option value='0'>请选择活动期数……</option>" +
+                    "</select>";
+    $('#lottery_id').closest('div.form-group').hide();
+    var lt_id      = $('#lt_id').val();
+    if (lt_id > 0){
+        $('#lottery_id').closest('div.form-group').show();
+    }
+    $('#lt_id').change(function(){
+        var lt_id = $('#lt_id').val();
+        if (lt_id > 0){
+            $('#lottery_id').closest('div.form-group').show();
+        }
+        $.post("{{ url_for('order.html_section_number_options') }}", {'lt_id':lt_id}, function(data){
+            $("#lottery_id").parent('div').replaceWith(data);
+            $('#lottery_id').selectpicker();
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ url_for('after.index')}}">售后列表</a></li>
+{% endblock %}
+
+{% block body %}
+<input type="hidden" name="after_id" id="after_id" value="{{ f.after_id }}">
+{% set AFTER_TYPE = {1:'退货', 0:'默认'}%}
+{% set STATUS = {1:'提交售后',2:'审核拒绝', 3:'审核通过', 4:'店铺已收货', 5:'已经退款', 6:'客户确认完成', 0:'默认'}%}
+<div class="row">
+    <div class="col-lg-6 col-md-6 col-xs-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息
+            {% if f.status == 1%}
+                <a href="javascript:;" onclick="javascript:audit(this);" data-toggle="modal" id="audit" name="audit" type="button" class="btn btn-primary btn-xs" style="float:right;">审  核</a>
+            {% endif %}
+            </div>
+            <div class="ibox-content">
+                <table class="table table-bordered">
+                    <tr><th>订单商品ID</th><td>{{ f.og_id }}</td></tr>
+                    <tr><th>订单ID</th><td>{{ f.order_id }}</td></tr>
+                    <tr><th>商品ID</th><td>{{ f.goods_id }}</td></tr>
+                    <tr><th>用户名</th><td>{{ USER_NAME.get(f.uid, '') }}</td></tr>
+                    <tr><th>售后类型</th><td>{{ AFTER_TYPE.get(f.after_type, 0) }}</td></tr>
+                    <tr><th>售后商品数量</th><td>{{ f.quantity }}</td></tr>
+                    <tr><th>售后申请内容</th><td>{{ f.content }}</td></tr>
+                    <tr><th>售后图片列表</th>
+                        <td style="padding-bottom: 0px;padding-top: 0px;">
+                            <div class="lightBoxGallery" style="text-align: left;">
+                            {% for _img in f.img_list|img_list %}
+                                <a href="{{ _img }}" title="总 结 扶 贫 图 片" data-gallery="">
+                                    <img src="{{ _img }}" style="max-width: 50px;">
+                                </a>
+                            {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    <tr><th>审核留言</th><td>{{ f.review_content }}</td></tr>
+                    <tr><th>售后状态</th><td>{{ STATUS.get(f.status, '') }}</td></tr>
+                    <tr><th>增加时间</th><td>{{ f.add_time }}</td></tr>
+                    <tr><th>更新时间</th><td>{{ f.update_time }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- 项目步骤弹出层 -->
+<div class="modal fade" id="audit_modal" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="margin-top: 20%;left: 72%;">
+            <form class="form-horizontal" method="GET" id="audit_modal_form" autocomplete="off">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">关闭</span></button>
+                    <h4 class="modal-title">售后审核</h4>
+                </div>
+                <div class="modal-body">
+                    {{ libs.select('审 核', 'audit_status', f.audit_status, [('请选择……','-1'),('通过', '1'),('不通过','0')], required='required') }}
+                    <div id="reason_info">
+                        {{ libs.textarea('原因', 'reason', '', help="不能通过的原因") }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary submit">提交</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+// $(function () { $("[data-toggle='tooltip']").tooltip(); });
+function audit(adom) {
+    $('#audit_status').val();
+    $('#audit_modal').modal({backdrop:false});
+}
+$("form:last").submit( function () {
+    var audit_status = $('#audit_status').val();
+    var after_id = $('#after_id').val();
+    var reason = $('#reason').val();
+    $.get('/after/audit', {'audit_status':audit_status, 'after_id':after_id, 'reason':reason}, function(res){
+        if (res == 'ok' || res=='not_good') {
+            if (res == 'ok'){
+                window.wxc.xcConfirm('审核通过', window.wxc.xcConfirm.typeEnum.success);
+            }else{
+                if (reason == ''){
+                    window.wxc.xcConfirm('审核不通过的原因不能为空', window.wxc.xcConfirm.typeEnum.info);
+                    $("#reason").focus();
+                    return false;
+                }
+                window.wxc.xcConfirm('审核不通过', window.wxc.xcConfirm.typeEnum.success);
+            }
+            var wait=1;
+            time('.xcConfirm.popBox');
+            function time(o) {
+                if (wait == 0) {
+                    wait = 1;
+                    window.location.href = "/after/detail?after_id="+after_id;
+                } else {
+                    wait--;
+                    setTimeout(function() {
+                    time(o)
+                    },
+                1000)
+                }
+            }
+        }else{
+            window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.info);
+            return false;
+        }
+    });
+    return false;
+});
+$(document).ready( function(){
+    $('a.poverty_reason').each(function(){
+        var $a = $(this);
+        var spg_id = $a.attr('spg_id');
+        $('#poverty_reason_'+spg_id).darkTooltip({
+            size:'large',
+            trigger:'click',
+            animation:'flipIn',
+            gravity:'west',
+            modal: false,
+        });
+    })
+});
+</script>
+{% endblock %}

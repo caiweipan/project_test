@@ -1,0 +1,304 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="/static/summernote/summernote.css">
+{% endblock %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/news/list') }}">资讯列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+    {# <div class="col-lg-12 col-md-12 col-xs-12"> #}
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+                <form id="myform" class="form-horizontal" method="POST" action="{{ url_for('news.news_save') }}" enctype="multipart/form-data">
+                    {{ libs.input('作者名字', 'author_name', f.author_name, required='required', help='') }}
+                    {{ libs.input('标题', 'title', f.title, required='required', help='') }}
+                    {{ libs.select('资讯类别', 'nc_id', f.nc_id, [('请选择……',''),('一膳资讯', '1'),('一膳大收罗','2'),('美食美课','3'),('一膳推荐','4'),('知识问答','5'),('即时生鲜','6')], required='required') }}
+                    {{ libs.img('资讯主图', 'news_img',f.news_img, type="file", help='一张图片', required=img_required) }}
+                    {# {{ libs.input('经纬度', 'jingdu_weidu', f.jingdu_weidu, required='required', help='<a href="http://api.map.baidu.com/lbsapi/getpoint/index.html" target="_blank">经纬度查询</a>') }} #}
+                    {{ libs.select('状态', 'status', f.status, [('请选择……','-1'),('显示', '1'),('不显示','0')], required='required') }}
+                    {{ libs.select('是否推荐到首页', 'is_top', f.is_top, [('请选择……',''),('是', '1'),('否','0')], required='required') }}
+                    {{ libs.input('排序', 'sort_order', f.sort_order, required='', help='数值越大排序越靠前') }}
+                    {{ libs.video('视频', 'news_video', f.news_video, help='') }}
+                    {{ libs.textarea('简介', 'desc', f.desc, help='') }}
+                    {{ libs.textarea('详情', 'detail', f.detail) }}
+                    <input type="hidden" name="news_id" value="{{ f.news_id }}" id="news_id">
+                    <input type="hidden" name="img_json" value="" id="img_json">
+                    {{ libs.submit() }}
+                </form>
+            </div>
+        </div>
+    </div>
+    {% if f.news_id > 0 %}
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">添加资讯商品</div>
+            <div class="ibox-content">
+                <form class="form-horizontal wizard" method="GET" action="" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="col-lg-2 control-label" id="label-goods_id">商品ID</label>
+                        <div class="col-lg-3" id="control-goods_id">
+                            <input class="form-control " id="goods_id" name="goods_id" value="" type="text" placeholder="商品ID">
+                        </div>
+
+                        <label class="col-lg-2 control-label" id="label-extend">描述</label>
+                        <div class="col-lg-3" id="control-extend">
+                            <input class="form-control " id="extend" name="extend" value="" type="text" placeholder="描述">
+                        </div>
+
+                        <div class="col-lg-2">
+                            <button id="add_goods" name="add_goods" type="button" class="btn btn-primary">添加</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">资讯商品{#<a href="#submit2" id="add_news_goods_button" name="add_news_goods_button" type="submit" class="btn btn-primary btn-xs" style="float:right;">新增资讯商品</a>#}</div>
+            <div class="ibox-content">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>商品ID</th>
+                            <th>商品名称</th>
+                            <th>描述</th>
+                            <th>增加时间</th>
+                            <th>&nbsp;</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for news_goods in news_goods_list %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ news_goods.goods_id }}</td>
+                            <td><a href="{{ url_for('goods.goods_edit', goods_id=news_goods.goods_id)}}">{{ news_goods.goods_name}}</a></td>
+                            <td>{{ news_goods.extend}}</td>
+                            <td>{{ news_goods.add_time|format_timestamp }}</td>
+                            <td><a href="javascript:;" onclick="javascript:delete_news_goods({{ news_goods.ng_id }}, {{ f.news_id }},this);">移除</a></td>
+                            <td><a href="{{ url_for('news.delete_news_goods',ng_id=news_goods.ng_id)}}"></a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-4 col-xs-12" id="goods_list" style="display: none;">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">商品列表</div>
+            <div class="ibox-content">
+            <form class="form-horizontal wizard" method="GET" action="" enctype="multipart/form-data">
+                <input type="hidden" name="news_id" value="{{ f.news_id }}" id="news_id">
+                <input type="hidden" name="redirect_url" value="{{ redirect_url }}" id="redirect_url">
+                <div class="form-group">
+                    <label class="col-lg-4 control-label" id="label-goods_name">请输入商品名称</label>
+                    <div class="col-lg-6" id="control-goods_name">
+                        <input class="form-control " id="goods_name" name="goods_name" value="" type="text" placeholder="请输入商品名称">
+                    </div>
+                    <div class="col-lg-2">
+                        <div class="form-group">
+                            <button id="submit2" name="submit2" type="submit" class="btn btn-primary">确认</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>商品ID</th>
+                        <th>商品名称</th>
+                        <th>新增资讯商品</th>
+                    </tr>
+                </thead>
+                <tbody >
+                {% for goods in goods_list %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ goods.goods_id }}</td>
+                        <td><a href="{{ url_for('goods.goods_edit', goods_id=goods.goods_id)}}">{{ goods.goods_name}}</a></td>
+                        <td><a href="{{ url_for('news.add_news_goods',news_id=f.news_id, goods_id=goods.goods_id, redirect_url='yes')}}" type="submit" class="btn btn-primary btn-xs">新增资讯商品</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {{ libs.pagination_html(pagination) }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$(document).ready(function(){
+    var redirect_url = $('#redirect_url').val();
+    if(redirect_url=='yes'){
+        $('#goods_list').show();
+        window.wxc.xcConfirm('新增成功', window.wxc.xcConfirm.typeEnum.success);
+        var wait=1;
+        time('.xcConfirm.popBox');
+        function time(o) {
+            if (wait == 0) {
+                wait = 1;
+            } else {
+                wait--;
+                setTimeout(function() {
+                time(o)
+                },
+            1000)
+            }
+        }
+    }
+    if(redirect_url=='no_yet'){
+        $('#goods_list').show();
+    }else{
+        $('#goods_list').hide();
+    }
+    $('a#add_news_goods_button').click(function(){
+        $('#redirect_url').val('no_yet');
+        $('#goods_list').show();
+    });
+});
+function delete_news_goods(ng_id,news_id, adom) {
+    window.wxc.xcConfirm('确定要移除该资讯商品吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/news/delete/news_goods', {'ng_id':ng_id}, function(res){
+            if (res != 'ok'){
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            window.wxc.xcConfirm('移除成功！', window.wxc.xcConfirm.typeEnum.success);
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+            window.location.href = "/news/edit?news_id="+news_id;
+        });
+    });
+}
+</script>
+<script type="text/javascript">
+$('#add_news_goods').click(function(res){
+    var ng_id = $('#ng_id').val();
+    var goods_id = $('#goods_id').val();
+    var news_id = $('#news_id').val();
+    if (goods_id == ''){
+        window.wxc.xcConfirm('请选择资讯商品', window.wxc.xcConfirm.typeEnum.info);
+        return false;
+    }
+    $.get("{{ url_for('news.add_news_goods') }}", {'ng_id':ng_id, 'goods_id':goods_id, 'news_id':news_id }, function(res){
+        if ( res != 'ok'){
+            window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.info);
+            return false;
+        } else {
+            window.wxc.xcConfirm('新增成功', window.wxc.xcConfirm.typeEnum.success);
+            var wait=1;
+            time('.xcConfirm.popBox');
+            function time(o) {
+                if (wait == 0) {
+                    wait = 1;
+                    window.location.href = "/news/edit?news_id="+news_id;
+                } else {
+                    wait--;
+                    setTimeout(function() {
+                    time(o)
+                    },
+                1000)
+                }
+            }
+        }
+    });
+});
+</script>
+<script src="/static/js/tab.js"></script>
+<script type="text/javascript" src="/static/summernote/summernote.min.js"></script>
+<script type="text/javascript" src="/static/summernote/lang/summernote-zh-CN.min.js"></script>
+<script type="text/javascript">
+// 初始化summernote
+var $summernote = $("#detail").summernote({
+    'lang':'zh-CN',
+    'height':300,
+    callbacks: {
+        onImageUpload: function(files) {
+            sendFile(files[0]);
+        }
+    }
+});
+
+// summernote上传文件
+function sendFile(file) {
+    var img_url = '';
+    var data = new FormData();
+
+    data.append("file", file);
+    data.append('cat', 'news');
+
+    $.ajax({
+        url: "/sys/file/upload",
+        data: data,
+        cache: false,
+        contentType: false,
+        processData: false,
+        async: false,
+        type: 'POST',
+        success: function(url){
+            if (url != 'error') {
+                img_url = url;
+            } else {
+                alert('哦！糟糕，上传图片失败，请重传！');
+            }
+        }
+    });
+
+    if (img_url != '') {
+        $summernote.summernote('insertImage', img_url, function($image) {
+            $image.attr('style', 'width: 100%;');
+        });
+    }
+}
+
+$('#myform').submit(function(){
+    var $summernote = $('#detail');
+    var content_text = $summernote.summernote().text();
+    var $dom = $(content_text);
+    console.log(content_text);
+    var $img_list = $dom.find("img");
+
+    var img_arr = Array();
+    $img_list.each(function(){
+        var src = $(this).attr('src');
+        img_arr.push(src);
+    });
+
+    var img_json = JSON.stringify(img_arr);
+    $("#img_json").val(img_json);
+});
+
+// 添加资讯商品
+$("#add_goods").click(function(){
+    var news_id = $("#news_id").val();
+    var goods_id = $("#goods_id").val();
+    var extend = $("#extend").val();
+
+    $.post("{{ url_for('news.add_news_goods') }}", {'news_id':news_id, 'goods_id':goods_id, 'extend':extend}, function(data){
+        if (data.ret == 0) {
+            location.replace(document.referrer);
+        } else {
+            alert(data.msg);
+        }
+    });
+});
+</script>
+{% endblock %}

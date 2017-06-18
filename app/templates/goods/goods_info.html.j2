@@ -1,0 +1,657 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block head %}
+<link rel="stylesheet" type="text/css" href="/static/summernote/summernote.css">
+{% endblock %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/goods/list') }}">商品列表</a></li>
+{% endblock %}
+
+{% block box_body %}
+<link rel="stylesheet" href="//apps.bdimg.com/libs/jqueryui/1.10.4/css/jquery-ui.min.css">
+<form class="form-horizontal" method="POST" action="{{ url_for('goods.goods_save') }}" enctype="multipart/form-data">
+    <!-- tabs start -->
+    <ul class="nav nav-tabs" role="tablist" id="myTab">
+        <li role="presentation" class="active">
+            <a href="#tabs-base" role="tab" data-toggle="tab">基本信息</a>
+        </li>
+        <li role="presentation" style="display: none;">
+            <a href="#tabs-sku" role="tab" data-toggle="tab">SKU</a>
+        </li>
+        <li role="presentation" style="display: none;">
+            <a href="#tabs-filter" role="tab" data-toggle="tab">筛选属性</a>
+        </li>
+        <li role="presentation">
+            <a href="#tabs-spec" role="tab" data-toggle="tab">商品规格</a>
+        </li>
+        <li role="presentation">
+            <a href="#tabs-gallery" role="tab" data-toggle="tab">相 册</a>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <!-- 基本信息 -->
+        <div role="tabpanel" class="tab-pane active" id="tabs-base" style="margin-top:20px;">
+            {% set required = '' if f else required%}
+            {{ libs.input('商品名称', 'goods_name', f.goods_name, required='required', help='') }}
+            {{ libs.input('副标题', 'goods_desc', f.goods_desc, help='如：500克/条 ') }}
+            {{ libs.img('商品图片', 'goods_img',f.goods_img, type="file", help='一张图片', required=required) }}
+            {{ libs.select('商品品类', 'kind', f.kind, [('请选择……',''),('普通商品', '1'),('一元购商品', '2')], required='required') }}
+            {{ libs.dbselect('分类名称', 'gc_id', f.gc_id, category_list, 'category_name', 'gc_id',required='required') }}
+            <input id="gc_id" name="gc_id" type="hidden" value="{{ gc_id }}">
+            <hr>
+            {{ libs.input('销售价格', 'goods_price', f.goods_price, required='required min=0.00 step=0.01', help='') }}
+            {{ libs.input('市场价', 'market_price', f.market_price, required='required min=0.00 step=0.01') }}
+            {{ libs.input('销量', 'sale_count', f.sale_count, type='number') }}
+            {{ libs.input('库存数量', 'quantity', f.quantity, help='') }}
+            <hr>
+            {{ libs.select('是否上架', 'is_sale', f.is_sale, [('请选择……',''),('是', '1'),('否','0')], required='required') }}
+            {{ libs.select('是否包邮', 'is_free_shipping', f.is_free_shipping, [('请选择……',''),('是', '1'),('否','0')], required='required') }}
+            {{ libs.select('是否支持退货', 'is_return', f.is_return, [('请选择……',''),('是', '1'),('否','0')], required='required') }}
+            {{ libs.select('是否热销', 'is_hot', f.is_hot, [('请选择……',''),('是', '1'),('否','0')], required='required') }}
+            {{ libs.select('是否今日抢鲜', 'is_pre', f.is_pre, [('请选择……',''),('是', '1'),('否','0')], required='required') }}
+            {{ libs.select('是否新品推荐', 'is_new', f.is_new, [('请选择……',''),('是', '1'),('否','0')], required='required') }}
+            {{ libs.input('商品排序', 'sort_order', f.sort_order|default(0), type='number', required='required min=0', help='数值越大排序越靠前') }}
+            <hr>
+            <div class="form-group">
+                <label class="col-lg-4 control-label">详情</label>
+                <div class="col-lg-8">
+                    <textarea id="summernote" name="goods_detail">
+                        {% if f.goods_detail %}{{ f.goods_detail }}{% endif %}
+                    </textarea>
+                </div>
+            </div>
+            {# {% set goods_attr = f.goods_attr if f.goods_attr else ''%} #}
+            {# {{ libs.textarea('商品属性', 'goods_attr', goods_attr) }} #}
+            {{ libs.submit() }}
+        </div>
+        <!-- SKU -->
+        <div role="tabpanel" class="tab-pane" id="tabs-sku">
+            {% if sku_list %}
+            <div class="ibox float-e-margins">
+                <!--<div class="ibox-title">SKU</div>-->
+                <div class="ibox-content" style="border-color:#fff;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <td>序号</td>
+                                <td>SKU</td>
+                                <td>价格</td>
+                                <td>库存</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for sku in sku_list %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ sku.sku_name }}</td>
+                                <td>{{ sku.sku_price }}</td>
+                                <td>{{ sku.sku_quantity }}</td>
+                                <td><a href="javascript:;" onclick="javascript:sku_delete({{ sku.gs_id }}, this);">删除</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            <div class="form-group" id="goods_sku_group">
+                <label class="col-lg-2 control-label">SKU属性组</label>
+                <div class="col-lg-4">
+                    <select id="_sku_group_id" class="form-control" name="_sku_group_id" size="1">
+                        <option value="">请选择SKU属性组……</option>
+                        {% for sku_group in sku_group_list %}
+                            <option value="{{ sku_group.ag_id }}">{{ sku_group.ag_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-6">
+                    <span class="form-control" style="border: none;">
+                        <i class="fa fa-plus" onclick="javascript:sku_group_add();" style="cursor: pointer;"></i>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <button type="button" class="btn btn-warning btn-xs" onclick="javascript:create_sku_table();">生成SKU组合</button>
+                    </span>
+                </div>
+            </div>
+            <div class="ibox float-e-margins">
+                <!--<div class="ibox-title">SKU TABLE</div>-->
+                <div id="sku_table_box" class="ibox-content" style="border-color:#fff;">
+                    <!-- sku table html -->
+                </div>
+            </div>
+        </div>
+        <!-- 筛选属性 -->
+        <div role="tabpanel" class="tab-pane" id="tabs-filter">
+            {% if attr_list %}
+            <div class="ibox float-e-margins">
+                <!--<div class="ibox-title">筛选属性</div>-->
+                <div class="ibox-content" style="border-color:#fff;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <td>序号</td>
+                                <td>属性名称</td>
+                                <td>属性组名称</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for attr in attr_list %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ attr.attr_name }}</td>
+                                <td>{{ attr.ag_name }}</td>
+                                <td><a href="javascript:;" onclick="javascript:attr_delete({{ attr.ga_id }}, this);">删除</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            <div class="form-group" id="goods_attr">
+                <label class="col-lg-3 control-label">筛选属性</label>
+                <div class="col-lg-3">
+                    <select id="_ag_id" class="form-control" name="_ag_id" size="1">
+                        <option value="">请选择属性组……</option>
+                        {% for attr_group in attr_group_list %}
+                            <option value="{{ attr_group.ag_id }}">{{ attr_group.ag_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3">
+                    <select id="_attr_id" class="form-control" name="_attr_id" size="1">
+                        <option value="">请选择属性……</option>
+                    </select>
+                </div>
+                <div class="col-lg-3">
+                    <span class="form-control" style="border: none;">
+                        <i class="fa fa-plus" onclick="javascript:attr_add();" style="cursor: pointer;"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- 商品规格 -->
+        <div role="tabpanel" class="tab-pane" id="tabs-spec">
+            <div class="row">
+                <div class="col-lg-8 col-md-6 col-xs-12">
+                    <div class="ibox float-e-margins">
+                        <div class="ibox-title">商品规格列表</div>
+                        <div class="ibox-content" style="border-color:#fff;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <td>规格id</td>
+                                        <td>规格键</td>
+                                        <td>规格值</td>
+                                        <td>排序</td>
+                                        <td>增加时间</td>
+                                        <td>编辑</td>
+                                        <td>移除</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for gs in gs_list %}
+                                    <tr>
+                                        <td>{{ gs.gs_id }}</td>
+                                        <td class="spec_key_{{ gs.gs_id }}">{{ gs.spec_key }}</td>
+                                        <td class="spec_value_{{ gs.gs_id }}">{{ gs.spec_value }}</td>
+                                        <td class="sort_order_{{ gs.gs_id }}">{{ gs.sort_order }}</td>
+                                        <td>{{ gs.add_time|format_timestamp}}</td>
+                                        <td><a href="javascript:;" onclick="javascript:gs_edit({{ gs.gs_id }}, '{{ gs.spec_key }}', '{{ gs.spec_value }}', {{ gs.sort_order }},this);">
+                                                编辑
+                                            </a>
+                                        </td>
+                                        <td><a href="javascript:;" onclick="javascript:gs_delete({{ gs.gs_id }}, this);">移除</a></td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 col-xs-12">
+                    <div class="ibox float-e-margins">
+                        <div class="ibox-title">规格模板列表</div>
+                        <div class="ibox-content" style="border-color:#fff;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <td>模板ID</td>
+                                        <td>模板名称</td>
+                                        <td>添加商品规格</td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for st in st_list %}
+                                    <tr>
+                                        <td>{{ st.st_id }}</td>
+                                        <td>{{ st.st_name }}</td>
+                                        <td><a href="javascript:;" onclick="javascript:st_add({{ st.st_id }}, this);">添加商品规格</a></td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 相册 -->
+        <div role="tabpanel" class="tab-pane" id="tabs-gallery">
+            {% if gallery_list %}
+            <div class="ibox float-e-margins">
+                <!--<div class="ibox-title">商品相册</div>-->
+                <div class="ibox-content" style="border-color:#fff;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <td>序号</td>
+                                <td>图片</td>
+                                <td>&nbsp;</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for gallery in gallery_list %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><a href="{{ gallery.img }}" target="_blank"><img src="{{ gallery.img }}" style="max-height: 50px;"></a></td>
+                                <td><a href="javascript:;" onclick="javascript:gallery_delete({{ gallery.gg_id }}, this);">删除</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+            <div class="form-group" id="goods_gallery">
+                <label class="col-lg-4 control-label">商品相册</label>
+                <div class="col-lg-8">
+                    <span class="form-control" style="border: none;">
+                        <i class="fa fa-plus" onclick="javascript:gallery_add();" style="cursor: pointer;"></i>
+                    </span>
+                </div>
+            </div>
+            {{ libs.submit() }}
+        </div>
+        <!-- tabs ended -->
+        <input type="hidden" name="goods_id" value="{{ f.goods_id }}" id="goods_id">
+    </div>
+</form>
+<!-- 编辑商品规格弹出层 -->
+<div class="modal fade" id="goods_spec_modal" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" style="margin-top: 10%;">
+            <form class="form-horizontal" id="template_modal_form" autocomplete="off", enctype="multipart/form-data">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                        <span class="sr-only">关闭</span>
+                    </button>
+                    <h4 class="modal-title">编辑商品规格</h4>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="gs_id_modal" id="gs_id_modal" value="">
+                    {{ libs.input(' 规格键', 'spec_key_modal', '', required='required') }}
+                    {{ libs.input('规格值', 'spec_value_modal', '', required='required') }}
+                    {{ libs.input(' 排序', 'sort_order_modal', '', required='required') }}
+                </div>
+                <div class="modal-footer">
+                    <a type="button" class="btn btn-primary" id="submit">提交</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script src="//apps.bdimg.com/libs/jqueryui/1.10.4/jquery-ui.min.js"></script>
+<script type="text/javascript">
+// 自动点击商品规格tab
+var check_type = {{ check_type }};
+if (check_type == 1){
+    $("a[href=#tabs-spec]").trigger("click");
+}
+
+// 编辑商品规格弹出层
+function gs_edit(gs_id, spec_key, spec_value, sort_order,adom) {
+    $('#gs_id_modal').val(gs_id);
+    $('#spec_key_modal').val(spec_key);
+    $('#spec_value_modal').val(spec_value);
+    $('#sort_order_modal').val(sort_order);
+    $('#goods_spec_modal').modal({backdrop:false});
+}
+
+// 添加商品规格
+function st_add(st_id, adom){
+    var goods_id = $('#goods_id').val();
+    window.wxc.xcConfirm('确定要添加商品规格吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get("{{ url_for('goods.st_add') }}", {'st_id':st_id, 'goods_id':goods_id}, function(ret){
+            if (ret != 'ok') {
+                window.wxc.xcConfirm(ret, window.wxc.xcConfirm.typeEnum.error);
+                return;
+            }else{
+                window.wxc.xcConfirm('添加成功', window.wxc.xcConfirm.typeEnum.success);
+                window.location.href = '?check_type=1';
+            }
+        });
+    });
+}
+
+// 编辑商品规格
+$('a#submit').click(function(){
+    var gs_id = $('#gs_id_modal').val();
+    var spec_key = $('#spec_key_modal').val();
+    var spec_value = $('#spec_value_modal').val();
+    var sort_order = $('#sort_order_modal').val();
+    $.get("{{ url_for('goods.gs_edit') }}", {'gs_id':gs_id, 'spec_key':spec_key, 'spec_value':spec_value, 'sort_order':sort_order}, function(ret){
+        if (ret != 'ok') {
+            window.wxc.xcConfirm(ret, window.wxc.xcConfirm.typeEnum.error);
+            return;
+        }else{
+            $('td.spec_key_'+gs_id).html(spec_key);
+            $('td.spec_value_'+gs_id).html(spec_value);
+            $('td.sort_order_'+gs_id).html(sort_order);
+            window.location.href = '?gs_id='+gs_id+ '&check_type=1';
+        }
+    });
+});
+// $(document).ready(function() {
+//   var goods_id = $("#goods_id").val();
+//   $( function() {
+//       $( "#tags" ).autocomplete({
+//           source: function(request, response) {
+//               $.ajax({
+//                   url:"/goods/category_name?goods_id="+goods_id+"&tags_value="+$("#tags").val(),
+//                   type:"get",
+//                   dataType:"json",
+//                   data: {'category_name':request.term},
+//                   success:function(data){
+//                       response($.map(data.data.category_name_list, function(item) {
+//                           return {
+//                               label: item.category_name,
+//                               value: item.gc_id
+//                           }
+//                       }));
+//                   },
+//                   error:function(data){
+//                       window.wxc.xcConfirm('请求服务器失败', window.wxc.xcConfirm.typeEnum.error);
+//                       return false;
+//                   }
+//               });
+//           },
+//           select: function(e, ui) {
+//               this.value = ui.item.label;
+//               $("#gc_id").val(ui.item.value);
+//               return false;
+//           }
+//       });
+//   });
+// });
+$('button:submit').click(function(){
+  var tags = $('#tags').val();
+  var gc_id = $('#gc_id').val();
+  if (tags =='' && gc_id <= 0){
+    window.wxc.xcConfirm('请选择上级分类', window.wxc.xcConfirm.typeEnum.error);
+    return false;
+  }
+});
+</script>
+<script src="/static/js/tab.js"></script>
+<script type="text/javascript" src="/static/summernote/summernote.min.js"></script>
+<script type="text/javascript" src="/static/summernote/lang/summernote-zh-CN.min.js"></script>
+<script type="text/javascript">
+// 初始化summernote
+var $summernote = $("#summernote").summernote({
+    'lang':'zh-CN',
+    'height':400,
+    callbacks: {
+        onImageUpload: function(files) {
+            sendFile(files[0]);
+        }
+    }
+});
+
+// summernote上传文件
+function sendFile(file) {
+    var img_url = '';
+    var data = new FormData();
+
+    data.append("file", file);
+    data.append('cat', 'news');
+
+    $.ajax({
+        url: "/sys/file/upload",
+        data: data,
+        cache: false,
+        contentType: false,
+        processData: false,
+        async: false,
+        type: 'POST',
+        success: function(url){
+            if (url != 'error') {
+                img_url = url;
+            } else {
+                window.wxc.xcConfirm('哦！糟糕，上传图片失败，请重传！', window.wxc.xcConfirm.typeEnum.error);
+            }
+        }
+    });
+
+    if (img_url != '') {
+        $summernote.summernote('insertImage', img_url, function($image) {
+            $image.attr('style', 'width: 100%;');
+        });
+    }
+}
+    $(document).ready(function() {
+        $('#goods_attr').summernote({
+            'lang':'zh-CN',
+            height: 400,
+            onImageUpload: function(files, editor, welEditable) {
+                sendFiles(files[0], editor, welEditable);
+            },
+        });
+
+    });
+    function sendFiles(file, editor, welEditable) {
+        data = new FormData();
+        data.append("file", file);
+        data.append('cat', 'goods');
+        $.ajax({
+            data: data,
+            type: "POST",
+            url: "/sys/file/upload",
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function(url) {
+                if (url != 'error') {
+                    editor.insertImage(welEditable, url);
+                } else {
+                    window.wxc.xcConfirm('哦！糟糕，上传图片失败，请重传！', window.wxc.xcConfirm.typeEnum.error);
+                }
+            }
+        });
+    }
+
+// group remove
+function group_remove(label) {
+    var $group = $(label).parent();
+    $group.remove();
+}
+
+// 增加相册
+function gallery_add() {
+    var group_html = '<div class="form-group gallery"> \
+                        <label class="col-lg-4 control-label" onclick="javascript:group_remove(this);" style="cursor: pointer;"> \
+                            <i class="fa fa-minus"></i> \
+                        </label> \
+                        <div class="col-lg-8"> \
+                            <input class="form-control" type="file" name="gallery"> \
+                        </div> \
+                     </div>';
+
+    $gallery = $('.gallery').last();
+    if ($gallery.length == 0) {
+        $gallery = $('#goods_gallery');
+    }
+
+    $gallery.after(group_html);
+}
+
+// 删除相册
+function gallery_delete(gg_id, adom) {
+    window.wxc.xcConfirm('确定要删除该相册吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/goods/gallery/delete/'+gg_id, function(data){
+            if (data.ret != 0) {
+                window.wxc.xcConfirm(data.msg, window.wxc.xcConfirm.typeEnum.error);
+                return;
+            }
+            window.wxc.xcConfirm('删除成功！', window.wxc.xcConfirm.typeEnum.success);
+            $(adom).parents('tr').remove();
+        });
+    });
+}
+// 删除规格
+function gs_delete(gs_id, adom) {
+    window.wxc.xcConfirm('确定要移除该规格吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/goods/gs_delete?gs_id='+gs_id, function(ret){
+            if (ret != 'ok') {
+                window.wxc.xcConfirm(ret, window.wxc.xcConfirm.typeEnum.error);
+                return;
+            }
+            window.wxc.xcConfirm('移除成功！', window.wxc.xcConfirm.typeEnum.success);
+            $(adom).parents('tr').remove();
+        });
+    });
+}
+// 增加筛选属性
+function attr_add() {
+    var attr_id = $("#_attr_id").val();
+    var attr_name = $("#_attr_id option:selected").text();
+    var group_html = '<div class="form-group attr"> \
+                        <label class="col-lg-4 control-label" onclick="javascript:group_remove(this);" style="cursor: pointer;"> \
+                            <i class="fa fa-minus"></i> \
+                        </label> \
+                        <div class="col-lg-8"> \
+                            <p class="form-control-static">' + attr_name + '</p> \
+                            <input type="hidden" name="attr_id" value="' + attr_id + '"> \
+                        </div> \
+                     </div>';
+
+    $attr = $('.attr').last();
+    if ($attr.length == 0) {
+        $attr = $('#goods_attr');
+    }
+
+    $attr.after(group_html);
+}
+
+// 删除筛选属性
+function attr_delete(ga_id, adom) {
+    window.wxc.xcConfirm('确定要删除该筛选属性吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/goods/attr/delete/'+ga_id, function(data){
+            if (data.ret != 0) {
+                window.wxc.xcConfirm(data.msg, window.wxc.xcConfirm.typeEnum.error);
+                return;
+            }
+            window.wxc.xcConfirm('删除成功！', window.wxc.xcConfirm.typeEnum.success);
+            $(adom).parents('tr').remove();
+        });
+    });
+}
+// 增加SKU属性组
+function sku_group_add() {
+    var sku_group_id = $("#_sku_group_id").val();
+    var sku_group_name = $("#_sku_group_id option:selected").text();
+    var group_html = '<div class="form-group sku_group"> \
+                        <label class="col-lg-4 control-label" onclick="javascript:group_remove(this);" style="cursor: pointer;"> \
+                            <i class="fa fa-minus"></i> \
+                        </label> \
+                        <div class="col-lg-8"> \
+                            <p class="form-control-static">' + sku_group_name + '</p> \
+                            <input type="hidden" class="sku_group_id" value="' + sku_group_id + '"> \
+                        </div> \
+                     </div>';
+
+    $sku_group = $('.sku_group').last();
+    if ($sku_group.length == 0) {
+        $sku_group = $('#_sku_group_id');
+    }
+
+    $sku_group.after(group_html);
+}
+
+// 删除SKU属性组
+function sku_group_delete(ga_id, adom) {
+    $.get('/goods/attr/delete/'+ga_id, function(data){
+        if (data.ret != 0) {
+            alert(data.msg);
+            return;
+        }
+        $(adom).parents('tr').remove();
+    });
+}
+
+// 生成SKU属性表格
+function create_sku_table() {
+    var ag_id_list = new Array();
+
+    $(".sku_group_id").each(function(i){
+       ag_id_list.push($(this).val());
+    });
+
+    $.post("{{ url_for('goods.sku_table') }}", {'ag_id_list':ag_id_list}, function(data){
+        if (data.ret == 0) {
+            $("#sku_table_box").empty().html(data.data.html_text);
+        } else {
+            alert(data.msg);
+        }
+    });
+}
+
+// 删除SKU
+function sku_delete(gs_id, adom) {
+    window.wxc.xcConfirm('确定要删除该SKU吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/goods/sku/delete/'+gs_id, function(data){
+            if (data.ret != 0) {
+                window.wxc.xcConfirm(data.msg, window.wxc.xcConfirm.typeEnum.error);
+                return;
+            }
+            window.wxc.xcConfirm('删除成功！', window.wxc.xcConfirm.typeEnum.success);
+            $(adom).parents('tr').remove();
+        });
+    });
+}
+$(function () {
+    // 获取属性列表
+    $("#_ag_id").change(function(){
+        var ag_id = $(this).val();
+
+        $.post("{{ url_for('goods.attr_group_attr_list') }}", {'ag_id':ag_id}, function(data){
+            if (data.ret == 0) {
+                html_text = '<option value="">请选择属性……</option>';
+
+                data.data.attr_list.forEach(function(attr){
+                    html_text += '<option value="' + attr.attr_id + '">' + attr.attr_name + '</option>';
+                });
+
+                $("#_attr_id").empty().html(html_text);
+            } else {
+                alert(data.msg);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

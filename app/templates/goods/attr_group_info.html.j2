@@ -1,0 +1,133 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/goods/attr_group/list') }}">属性组列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+                <form class="form-horizontal" method="POST" action="{{ url_for('goods.attr_group_save') }}">
+                    {{ libs.input('属性组名称', 'ag_name', f.ag_name, required='required', help='如：颜色, 尺寸等') }}
+                    {{ libs.select('属性组类别', 'ag_type', f.ag_type, [('请选择……',''),('筛选', '1'),('SKU','2')], required='required') }}
+                    <input type="hidden" name="ag_id" value="{{ f.ag_id }}">
+                    {{ libs.submit() }}
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 col-md-6">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">属性列表
+                {% set attr_add = g.get('attr_add', False) %}
+                {% if attr_add %}
+                    <button id="_attr_add" name="_attr_add" type="submit" class="btn btn-primary btn-xs" style="float:right;">新增属性</button>
+                {% endif %}
+            </div>
+            <div class="ibox-content">
+                <table class="table table-hover">
+                  <thead>
+                      <tr>
+                          <th>属性ID</th>
+                          <th>属性名称</th>
+                          <!--<th>&nbsp;</th>-->
+                      </tr>
+                  </thead>
+                  <tbody>
+                  {% for attr in attr_list %}
+                      <tr>
+                          <td width="50%">{{ attr.attr_id }}</td>
+                          <td class="attr_name" attr_id="{{ attr.attr_id }}" width="50%">{{ attr.attr_name }}</td>
+                          {# <td><a href="javascript:;" onclick="javascript:attr_delete({{ attr.attr_id }}, this);">删除</a></td> #}
+                      </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+        {#         {{ libs.pagination_html(pagination) }} #}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$("#_attr_add").click(function(){
+    $('#attr_name_modal').val();
+    $('#add_attr_modal').modal({backdrop:false});
+});
+function attr_delete(attr_id, adom) {
+    window.wxc.xcConfirm('确定要删除该属性吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/goods/attr_group/delete',{'attr_id':attr_id}, function(res){
+            if (res != 'ok') {
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return;
+            }
+            window.wxc.xcConfirm('删除成功！', window.wxc.xcConfirm.typeEnum.success);
+            $(adom).parents('tr').remove();
+        });
+    });
+}
+$('td.attr_name').click(function(){
+    var $td = $(this);
+    var attr_id = $(this).attr('attr_id');
+    var attr_name = $.trim($td.text());
+    var input = $("<input type='text' style='width: 70%;' value='" + attr_name + "'/>");
+    $td.html(input);
+    input.click(function () { return false; });
+
+    //获取焦点
+    input.trigger("focus");
+
+    //文本框失去焦点后提交内容，重新变为文本
+    input.blur(function () {
+        var new_attr_name = $(this).val();
+        //判断文本有没有修改
+        if (new_attr_name != attr_name) {
+            $.get('/goods/attr_name/modify', {'attr_id':attr_id,'new_attr_name':new_attr_name}, function (res){
+                window.wxc.xcConfirm('确定要修改吗？', window.wxc.xcConfirm.typeEnum.warning);
+                $('a.sgBtn.ok').click(function() {
+                    if (res == 'ok') {
+                        $td.html(new_attr_name);
+                    } else {
+                        $td.html(attr_name);
+                        window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                        return false;
+                    }
+                });
+                $td.html(attr_name);
+                return false;
+            });
+        } else {
+            $td.html(attr_name);
+            return false;
+        }
+    });
+});
+</script>
+<div class="modal fade" id="add_attr_modal" tabindex="-1" role="dialog"  aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form class="form-horizontal" method="POST" id="attr_modal_form" action="{{url_for('goods.save_attr')}}" autocomplete="off" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">关闭</span></button>
+                    <h4 class="modal-title">新增属性</h4>
+                </div>
+                <div class="modal-body">
+                    {{ libs.input('属性名称', 'attr_name_modal', f.attr_name_modal, type="text", required='required') }}
+                    <input type="hidden" name="ag_id" value="{{ f.ag_id }}" id="ag_id">
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary submit">提交</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

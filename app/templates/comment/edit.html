@@ -1,0 +1,59 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/store/') }}">门店列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+                <form class="form-horizontal wizard" method="POST" action="{{ url_for('comment.save') }}" enctype="multipart/form-data">
+                    <input id="store_id" type="hidden" name="store_id" value="{{ f.store_id }}">
+
+                    {{ libs.select('用户id', 'uid', f.uid, required='required') }}
+                    {{ libs.input('妮称', 'nickname', f.nickname, required='required') }}
+                    {{ libs.input('用户头像', 'avatar', type="file", help='一张照片') }}
+                    {% if f.avatar %}
+                    <div class="form-group">
+                        <label class="col-lg-4 control-label"></label>
+                        <div class="col-lg-8 ">
+                            <a href="{{ f.avatar }}" target="_blank">
+                                <img src="{{ f.avatar }}" style="max-width: 200px;">
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {{ libs.textarea('评价内容', 'content', f.content, required='required') }}
+                    {{ libs.input('评价时间', 'add_time', f.add_time, required='required') }}
+                    {{ libs.input('评价分数 ', 'rating', f.rating, type='number', required='required min=1 max=5 step=1') }}
+                    {{ libs.input('订单id', 'order_id', f.order_id, required='required')}}
+                    {{ libs.input('美容师uid', 'tuid', f.tuid, required='required') }}
+                    {{ libs.input('美容师妮称', 'tnickname', f.tnickname, required='required') }}
+                    {{ libs.input('美容师头像', 'tavatar', type="file", help='一张照片') }}
+                    {% if f.tavatar %}
+                    <div class="form-group">
+                        <label class="col-lg-4 control-label"></label>
+                        <div class="col-lg-8 ">
+                            <a href="{{ f.tavatar }}" target="_blank">
+                                <img src="{{ f.tavatar }}" style="max-width: 200px;">
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {{ libs.input('商品id', 'goods_id', f.goods_id, required='required', help='很重要，用户能联系到您') }}
+                    {{ libs.input('商品名称', 'goods_name', f.goods_name, required='required')}}
+                    {{ libs.input('门店id', 'store_id', f.store_id, required='required') }}
+                    {{ libs.submit() }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

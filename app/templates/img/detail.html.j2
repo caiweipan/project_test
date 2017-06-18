@@ -1,0 +1,43 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ url_for('img.index')}}">图片列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="col-lg-6 col-md-4 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息</div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="POST" action="{{ url_for('img.save') }}" enctype="multipart/form-data">
+                <input type="hidden" name="img_id" id="img_id" value="{{ f.img_id }}">
+
+                {{ libs.dbselect('图片分类', 'ic_id', f.ic_id, ic_list, 'ic_name', 'ic_id',required='required') }}
+                {{ libs.input('标题', 'img_title', f.img_title, required='required', help='') }}
+                {% if f and f.img_id > 0%}
+                {{ libs.img('图片', '_img', f._img, help='一张照片') }}
+                {% else %}
+                {{ libs.img('图片', '_img', f._img, required='required', help='一张照片') }}
+                {% endif %}
+                {{ libs.submit() }}
+              </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$(document).ready( function(){
+    var ic_id = $('ic_id').val();
+    if (ic_id <= 0){
+        window.wxc.xcConfirm('请选择图片分类', window.wxc.xcConfirm.typeEnum.info);
+        return false;
+    }
+});
+</script>
+{% endblock %}

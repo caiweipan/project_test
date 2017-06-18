@@ -1,0 +1,21 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/sys/list') }}">系统设置列表</a></li>
+{% endblock %}
+
+{% block box_body %}
+<form class="form-horizontal" method="POST" action="{{ url_for('sys.save_setting') }}" enctype="multipart/form-data">
+    {{ libs.select('邀请新朋友是否注册后赠送优惠券', 'is_invite_new_friends_to_register_as_a_gift_coupon', f.is_invite_new_friends_to_register_as_a_gift_coupon|default('-1'), [('请选择……', '-1'),('是', '1'),('否', '0')], required='required') }}
+    {{ libs.select('邀请新朋友是否首次下单后赠送优惠券', 'is_invite_new_friends_for_the_first_time_after_ordered_as_gift_coupons', f.is_invite_new_friends_for_the_first_time_after_ordered_as_gift_coupons|default('-1'), [('请选择……', '-1'),('是', '1'),('否', '0')], required='required') }}
+    {{ libs.input('邀请新朋友赠送的优惠券批次id', 'cb_id', f.cb_id|default(''), required='required', help='') }}
+    {{ libs.submit() }}
+</form>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+</script>
+{% endblock %}

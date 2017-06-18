@@ -1,0 +1,39 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="{{ request.cookies.get('goback_url', '/comment/order') }}">订单列表</a></li>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>订单id</th>
+                    <th>妮称</th>
+                    <th>头像</th>
+                    <th>评价内容</th>
+                    <th>评价时间</th>
+                    <th>评价分数</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for comment in order_comment_list %}
+                <tr>
+                    <td>{{ comment.order_id }}</td>
+                    <td>{{ comment.nickname }}</td>
+                    <td><img src="{{ comment.avatar }}" style="width:50px;"></td>
+                    <td>{{ comment.content }}</td>
+                    <td>{{ comment.add_time|format_timestamp }}</td>
+                    <td>{{ comment.rating }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

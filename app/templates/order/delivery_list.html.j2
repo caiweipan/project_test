@@ -1,0 +1,64 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'订单id', 'name':'order_id'},
+        {'label':'订单类型', 'name':'order_type', 'type':'select',
+            'options':[
+                {'name':'请选择……', 'value':'-1'},
+                {'name':'普通订单', 'value':'1'},
+                {'name':'一元购订单', 'value':'3'},
+            ]},
+        {'label':'下单时间', 'name':'add_time', 'type':'daterange', 'col-lg':'col-lg-3'},
+        {'label':'支付时间', 'name':'paid_time', 'type':'daterange', 'col-lg':'col-lg-3'},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+
+{% block data_body %}
+{% set ORDER_STATUS = { 0:'默认',1:'创建订单',2:'已完成',3:'已取消'}%}
+{% set ORDER_TYPE = {1:'普通订单',3:'一元购订单'}%}
+<div class="table-responsive">
+<table class="table">
+    <thead>
+        <tr>
+            <th>订单ID</th>
+            <th>用户昵称</th>
+            <th>手机号码</th>
+            <th>订单类型</th>
+            <th>下单时间</th>
+            <th>支付时间</th>
+            <th>详情</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for order in order_list %}
+        <tr>
+            <td>{{ order.order_id }}</td>
+            <td>{{ NICKNAME.get(order.uid, '') }}</td>
+            <td>{{ MOBILE.get(order.uid, '') }}</td>
+            <td>{{ ORDER_TYPE.get(order.order_type, '') }}</td>
+            <td>{{ order.add_time|format_timestamp }}</td>
+            <td>{{ order.paid_time|format_timestamp }}</td>
+            <td><a href="{{ url_for('order.detail', order_id=order.order_id, is_diliver=1) }}">详情</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{{ libs.pagination_html(pagination) }}
+
+{% endblock %}
+{% block footer %}
+<script type="text/javascript">
+$(document).ready(function(){
+    $(function () { $("[data-toggle='tooltip']").tooltip(); });
+});
+</script>
+{% endblock %}

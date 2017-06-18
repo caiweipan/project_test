@@ -1,0 +1,60 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+<li><a href="/coupon/">优惠券批次列表</a></li>
+{% endblock %}
+
+{% block search_body %}
+{%
+    set form_config = [
+        {'label':'用户ID', 'name':'uid',},
+        {'label':'用户手机号码', 'name':'mobile',},
+        {'label':'coupon_id', 'name':'coupon_id',},
+        {'label':'优惠券批次号', 'name':'cb_id',},
+    ]
+%}
+{{ libs.build_search_form(form_config) }}
+
+{% endblock %}
+{% block data_body %}
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>coupon_id</th>
+                <th>领取时间</th>
+                <th>用户ID</th>
+                <th>优惠券批次号</th>
+                <th>优惠券名称</th>
+                <th>适用商品</th>
+                <th>有效时间</th>
+                <th>是否使用</th>
+                <th>使用order_id</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for user_coupon in user_coupon_list %}
+            <tr>
+                <td>{{ user_coupon.coupon_id }}</td>
+                <td>{{ user_coupon.add_time|format_timestamp }}</td>
+                <td><a href="{{ url_for('user.user_detail', uid=user_coupon.uid) }}">{{ user_coupon.uid }}</a></td>
+                <td><a href="{{ url_for('coupon.detail', cb_id=user_coupon.cb_id) }}">{{ user_coupon.cb_id }}</a></td>
+                <td>{{ user_coupon.coupon_name }}</td>
+                <td class="col-lg-4" style="word-break:break-all;">{{ user_coupon.limit_goods_name }}</td>
+                <td>{{ user_coupon.begin_time|format_timestamp('%m-%d %H:%M') }} 至 {{ user_coupon.end_time|format_timestamp('%m-%d %H:%M') }}</td>
+                <td>{{ const.COUPON_IS_USED.get(user_coupon.is_valid, '未知') }}</td>
+                <td>{% if user_coupon.order_id %}{{ user_coupon.order_id }}{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{{ libs.pagination_html(pagination) }}
+<script type="text/javascript">
+</script>
+
+{% endblock %}
+

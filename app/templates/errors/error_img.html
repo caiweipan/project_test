@@ -1,0 +1,11 @@
+{% block main_body %}
+{% if error_type == 404 %}
+    <div class="row"><img src="http://imgs.meiziyue.com.cn/store_logo/2016-07-11/f8b78ef7-784a-428a-bc06-94768987fe7d.jpg" style="width: 100%; max-width: 100%;"></div>
+{% endif %}
+{% if error_type == 403 %}
+    <div class="row"><img src="http://thumbs.dreamstime.com/z/d-red-blue-text-error-white-background-stock-image-50578099.jpg" style="width: 100%; max-width: 100%;"></div>
+{% endif %}
+{% if error_type == 500 %}
+    <div class="row"><img src="https://blog.etsy.com/en/files/2015/06/530_.gif" style="width: 100%; max-width: 100%;"></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends 'layout/layout.html' %}
+{% import 'libs/libs.html' as libs %}
+{% import 'libs/const.html' as const %}
+
+{% block title_nav %}
+
+<li><a href="{{ url_for('power.index')}}">权限列表</a></li>
+{% endblock %}
+
+{% block body %}
+{% if role_id > 0%}
+    {% set col_num = 12|toint %}
+{% else %}
+    {% set col_num = 6|toint %}
+{% endif %}
+<div class="row">
+    <div class="col-lg-{{ col_num }} col-md-4 col-xs-{{ col_num }}">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">基本信息
+            {% if role_id > 0%}
+            <a id="back" name="back" type="button" class="btn btn-primary btn-xs" style="float:right;" href="javascript:history.go(-1)">返 回</a>
+            {% endif %}
+            </div>
+            <div class="ibox-content">
+              <form class="form-horizontal" method="POST" action="{{ url_for('power.role_save') }}" enctype="multipart/form-data">
+                <input type="hidden" name="role_id" id="role_id" value="{{ f.role_id }}">
+                <input type="hidden" name="permission_id_str" id="permission_id_str" value="{{ permission_id_str }}">
+                {{ libs.input('角色名称', 'role_name', f.role_name,required='required') }}
+                {{ libs.textarea('角色内容', 'desc', f.desc, required='required') }}
+                <hr>
+                <!--<div class="form-group">
+                    <label class="col-lg-4 control-label">全部</label>
+                    <div class="col-lg-8" id="permission_list">
+                        <div class="checkbox i-checks" id="all_permission">
+                            <div class="icheckbox_square-green">
+                                <input type="checkbox">
+                                <ins class="iCheck-helper"></ins>
+                            </div>
+                            <i></i>全部
+                        </div>
+                    </div>
+                </div> -->
+                <div class="form-group">
+                    {% for menu in menu_list%}
+                    <label class="col-lg-4 control-label">{{ menu.endpoint_name }}</label>
+                    {% set child_menu_list = menu.permission_id|child_menu_list %}
+                    <div class="col-lg-8" id="permission_list">
+                        {% for child_menu in child_menu_list%}
+                        <div class="checkbox i-checks role_permission-checkbox">
+                            <div class="icheckbox_square-green">
+                                <input name="permission_id" type="checkbox" value="{{ child_menu.permission_id }}">
+                                <ins class="iCheck-helper"></ins>
+                            </div> <i></i>  {{ child_menu.endpoint_name }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {{ libs.submit() }}
+              </form>
+            </div>
+        </div>
+    </div>
+    {% if role_id <= 0%}
+    <div class="col-lg-6 col-md-6 col-xs-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">角色列表
+                <a id="role_add" name="role_add" type="button" class="btn btn-primary btn-xs" style="float:right;" href="{{ url_for('power.admin_add') }}">添加用户角色</a>
+            </div>
+            <div class="ibox-content">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>角色id</th>
+                            <th>角色名称</th>
+                            <th>角色说明</th>
+                            <th>详情</th>
+                            <th>移除</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for role in role_query_list %}
+                        <tr>
+                            <td>{{ role.role_id }}</td>
+                            <td>{{ role.role_name }}</td>
+                            <td>{{ role.desc|striptags|truncate(18, Ture) }}
+                            <td><a href="{{ url_for('power.role_admin', role_id=role.role_id) }}">详情</a></td>
+                            <td><a href="javascript:;" onclick="javascript:role_delete({{ role.role_id }},this);">移除</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {{ libs.pagination_html(pagination) }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+$(document).ready(function() {
+    var permission_id_str = $('#permission_id_str').val();
+    if (permission_id_str == 'all') {
+        $('#all_permission').iCheck('check');
+    } else {
+        $('input[name=permission_id]').each(function(){
+            var $input = $(this);
+            var permission_id = $input.val();
+            if (permission_id_str.indexOf(permission_id+',') > -1 || permission_id_str.indexOf(','+permission_id) > -1||permission_id.length == 1 && permission_id_str.indexOf(permission_id) > -1) {
+                $input.parents('.i-checks').iCheck('check');
+            }
+            if($input.attr('checked')== undefined){
+                $("#all_goods").attr("checked",'');
+            }
+        })
+    }
+
+});
+function role_delete(role_id, adom) {
+    window.wxc.xcConfirm('确定要移除此角色吗？', window.wxc.xcConfirm.typeEnum.warning);
+    $('a.sgBtn.ok').click(function() {
+        $.get('/power/role_delete', {'role_id':role_id}, function(res){
+            if (res != 'ok'){
+                window.wxc.xcConfirm(res, window.wxc.xcConfirm.typeEnum.error);
+                return false;
+            }
+            window.wxc.xcConfirm('移除成功！', window.wxc.xcConfirm.typeEnum.success);
+            var wait=1;
+            time('.xcConfirm.popBox');
+            function time(o) {
+                if (wait == 0) {
+                    wait = 1;
+                    window.location.href = "/power/role_admin";
+                } else {
+                    wait--;
+                    setTimeout(function() {
+                    time(o)
+                    },
+                1000)
+                }
+            }
+            var $a = $(adom);
+            var $tr = $a.parents('tr').first();
+            $tr.remove();
+        });
+    });
+}
+// 全部 选中
+$('#all_permission').on('ifChecked', function(event){
+    $('.role_permission-checkbox').iCheck('check');
+
+});
+
+// 全部 取消
+$('#all_permission').on('ifUnchecked', function(event){
+    $('.role_permission-checkbox').iCheck('uncheck');
+});
+</script>
+{% endblock %}

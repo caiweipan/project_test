@@ -1,0 +1,26 @@
+<table class="table">
+    <thead>
+        <tr>
+            <td>SKU</td>
+            <td>价格</td>
+            <td>库存</td>
+        </tr>
+    </thead>
+    <tbody>
+    {% for sku in sku_list %}
+        <tr>
+            <td>
+                {{ sku_name_list[loop.index-1] }}
+                <input name="sku" type="hidden" value="{{ sku }}">
+                <input name="sku_name" type="hidden" value="{{ sku_name_list[loop.index-1] }}">
+            </td>
+            <td>
+                <input type="text" class="form-control" name="sku_price" value="" required="required">
+            </td>
+            <td>
+                <input type="text" class="form-control" name="sku_quantity" value="" required="required">
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
